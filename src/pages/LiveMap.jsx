@@ -1,404 +1,551 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight, MapPinned, RotateCcw } from 'lucide-react'
+import {
+  ArrowRight, RotateCcw, Plus, Minus,
+  Eye, EyeOff, Activity, Users, AlertTriangle, Gauge, MapPin, 
+  ChevronRight, BarChart3, ShieldAlert
+} from 'lucide-react'
 import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 
-const indoorMode = false
-const defaultCenter = [-0.1232, 51.5017]
-const defaultZoom = 13.5
+// ─────────────────────────────────────────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────────────────────────────────────────
 
-const zoneFeatures = {
+const MAP_CENTER  = [-0.118, 51.501]
+const MAP_ZOOM    = 13.5
+const MAP_STYLE   = 'https://demotiles.maplibre.org/style.json'
+
+const RISK = {
+  low:      { fill: '#8ED2A6', border: '#4FAF7A', label: 'Low',      fillOpacity: 0.45, bg: '#EAF7F0', text: '#1E6D5B' },
+  medium:   { fill: '#F0D97B', border: '#C9A82A', label: 'Medium',   fillOpacity: 0.50, bg: '#FBF6DC', text: '#8A6C1B' },
+  high:     { fill: '#F4A55A', border: '#D4742A', label: 'High',     fillOpacity: 0.55, bg: '#FFF2E7', text: '#A05C22' },
+  critical: { fill: '#E9695D', border: '#B83C30', label: 'Critical', fillOpacity: 0.65, bg: '#FDE9E7', text: '#A33020' },
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MOCK GEOJSON
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ZONES = {
   type: 'FeatureCollection',
   features: [
     {
-      type: 'Feature',
-      id: 'zone-a',
-      properties: {
-        id: 'zone-a',
-        name: 'Zone A',
-        risk_level: 'low',
-        current_count: 850,
-        capacity: 1000,
-        occupancy_pct: 85,
-        status: 'Low risk'
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [[[-0.127, 51.5055], [-0.117, 51.5055], [-0.117, 51.5018], [-0.127, 51.5018], [-0.127, 51.5055]]]
-      }
+      type: 'Feature', id: 'zone-a',
+      properties: { id: 'zone-a', name: 'Zone A',  sub: 'North Stand',       risk_level: 'low',      count: 2450, cap: 4200, pct: 58 },
+      geometry: { type: 'Polygon', coordinates: [[[-0.128, 51.506], [-0.120, 51.506], [-0.120, 51.503], [-0.128, 51.503], [-0.128, 51.506]]] }
     },
     {
-      type: 'Feature',
-      id: 'zone-b',
-      properties: {
-        id: 'zone-b',
-        name: 'Zone B',
-        risk_level: 'medium',
-        current_count: 920,
-        capacity: 1000,
-        occupancy_pct: 92,
-        status: 'Medium risk'
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [[[-0.116, 51.505], [-0.106, 51.505], [-0.106, 51.501], [-0.116, 51.501], [-0.116, 51.505]]]
-      }
+      type: 'Feature', id: 'zone-b',
+      properties: { id: 'zone-b', name: 'Zone B',  sub: 'East Concourse',    risk_level: 'medium',   count: 2560, cap: 3600, pct: 71 },
+      geometry: { type: 'Polygon', coordinates: [[[-0.118, 51.506], [-0.110, 51.506], [-0.110, 51.503], [-0.118, 51.503], [-0.118, 51.506]]] }
     },
     {
-      type: 'Feature',
-      id: 'zone-c',
-      properties: {
-        id: 'zone-c',
-        name: 'Zone C',
-        risk_level: 'critical',
-        current_count: 1230,
-        capacity: 1400,
-        occupancy_pct: 88,
-        status: 'Critical risk'
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [[[-0.1205, 51.504], [-0.108, 51.504], [-0.108, 51.499], [-0.1205, 51.499], [-0.1205, 51.504]]]
-      }
+      type: 'Feature', id: 'zone-c',
+      properties: { id: 'zone-c', name: 'Zone C',  sub: 'Main Stage Front',  risk_level: 'critical', count: 4700, cap: 5000, pct: 94 },
+      geometry: { type: 'Polygon', coordinates: [[[-0.118, 51.502], [-0.110, 51.502], [-0.110, 51.499], [-0.118, 51.499], [-0.118, 51.502]]] }
     },
     {
-      type: 'Feature',
-      id: 'zone-d',
-      properties: {
-        id: 'zone-d',
-        name: 'Zone D',
-        risk_level: 'low',
-        current_count: 670,
-        capacity: 900,
-        occupancy_pct: 74,
-        status: 'Low risk'
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [[[-0.127, 51.5005], [-0.117, 51.5005], [-0.117, 51.4965], [-0.127, 51.4965], [-0.127, 51.5005]]]
-      }
+      type: 'Feature', id: 'zone-d',
+      properties: { id: 'zone-d', name: 'Zone D',  sub: 'West Concourse',    risk_level: 'medium',   count: 2270, cap: 3600, pct: 63 },
+      geometry: { type: 'Polygon', coordinates: [[[-0.128, 51.502], [-0.120, 51.502], [-0.120, 51.499], [-0.128, 51.499], [-0.128, 51.502]]] }
     },
     {
-      type: 'Feature',
-      id: 'zone-e',
-      properties: {
-        id: 'zone-e',
-        name: 'Zone E',
-        risk_level: 'high',
-        current_count: 800,
-        capacity: 1000,
-        occupancy_pct: 80,
-        status: 'High risk'
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [[[-0.116, 51.5005], [-0.106, 51.5005], [-0.106, 51.4965], [-0.116, 51.4965], [-0.116, 51.5005]]]
-      }
+      type: 'Feature', id: 'zone-e',
+      properties: { id: 'zone-e', name: 'Zone E',  sub: 'South Stand',       risk_level: 'low',      count: 1850, cap: 4200, pct: 44 },
+      geometry: { type: 'Polygon', coordinates: [[[-0.128, 51.498], [-0.120, 51.498], [-0.120, 51.495], [-0.128, 51.495], [-0.128, 51.498]]] }
     },
     {
-      type: 'Feature',
-      id: 'gate-1',
-      properties: {
-        id: 'gate-1',
-        name: 'Gate 1',
-        risk_level: 'medium',
-        current_count: 720,
-        capacity: 800,
-        occupancy_pct: 90,
-        status: 'Medium risk'
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [[[-0.1045, 51.5018], [-0.094, 51.5018], [-0.094, 51.4974], [-0.1045, 51.4974], [-0.1045, 51.5018]]]
-      }
-    }
+      type: 'Feature', id: 'zone-f',
+      properties: { id: 'zone-f', name: 'Zone F',  sub: 'Plaza South',       risk_level: 'low',      count: 1460, cap: 2800, pct: 52 },
+      geometry: { type: 'Polygon', coordinates: [[[-0.118, 51.498], [-0.110, 51.498], [-0.110, 51.495], [-0.118, 51.495], [-0.118, 51.498]]] }
+    },
+    {
+      type: 'Feature', id: 'main-stage',
+      properties: { id: 'main-stage', name: 'Stage', sub: 'Main Stage Pit',  risk_level: 'high',     count: 4860, cap: 6000, pct: 81 },
+      geometry: { type: 'Polygon', coordinates: [[[-0.108, 51.502], [-0.100, 51.502], [-0.100, 51.499], [-0.108, 51.499], [-0.108, 51.502]]] }
+    },
+    {
+      type: 'Feature', id: 'food-court',
+      properties: { id: 'food-court', name: 'Food Court', sub: 'F&B Area',  risk_level: 'medium',   count: 1450, cap: 2200, pct: 66 },
+      geometry: { type: 'Polygon', coordinates: [[[-0.108, 51.498], [-0.100, 51.498], [-0.100, 51.495], [-0.108, 51.495], [-0.108, 51.498]]] }
+    },
   ]
 }
 
-const gateMarkers = [
-  { id: 'entry-1', name: 'Entry East', lng: -0.1223, lat: 51.5037 },
-  { id: 'entry-2', name: 'Entry West', lng: -0.1185, lat: 51.5007 },
-  { id: 'exit-1', name: 'Exit North', lng: -0.1244, lat: 51.5009 }
+const FLOW_LINES = {
+  type: 'FeatureCollection',
+  features: [
+    { type: 'Feature', properties: { intensity: 'high'   }, geometry: { type: 'LineString', coordinates: [[-0.114, 51.500], [-0.114, 51.503]] } },
+    { type: 'Feature', properties: { intensity: 'high'   }, geometry: { type: 'LineString', coordinates: [[-0.118, 51.500], [-0.124, 51.500]] } },
+    { type: 'Feature', properties: { intensity: 'medium' }, geometry: { type: 'LineString', coordinates: [[-0.108, 51.500], [-0.118, 51.500]] } },
+    { type: 'Feature', properties: { intensity: 'low'    }, geometry: { type: 'LineString', coordinates: [[-0.124, 51.493], [-0.124, 51.495]] } },
+    { type: 'Feature', properties: { intensity: 'medium' }, geometry: { type: 'LineString', coordinates: [[-0.110, 51.503], [-0.114, 51.503]] } },
+  ]
+}
+
+const GATES = [
+  { id: 'entry-n', label: 'Entry North', type: 'entry', lng: -0.124, lat: 51.507 },
+  { id: 'entry-e', label: 'Entry East',  type: 'entry', lng: -0.100, lat: 51.504 },
+  { id: 'exit-w',  label: 'Exit West',   type: 'exit',  lng: -0.129, lat: 51.500 },
+  { id: 'exit-s',  label: 'Exit South',  type: 'exit',  lng: -0.114, lat: 51.492 },
 ]
 
-const riskColors = {
-  low: '#8ED2A6',
-  medium: '#F0D97B',
-  high: '#F4B067',
-  critical: '#E9695D'
+const DEVICES = [
+  { id: 'gw1', lng: -0.125, lat: 51.503 }, { id: 'gw2', lng: -0.114, lat: 51.503 },
+  { id: 'gw3', lng: -0.125, lat: 51.500 }, { id: 'gw4', lng: -0.114, lat: 51.500 },
+  { id: 'gw5', lng: -0.104, lat: 51.500 }, { id: 'gw6', lng: -0.104, lat: 51.496 },
+  { id: 'gw7', lng: -0.114, lat: 51.496 }, { id: 'gw8', lng: -0.125, lat: 51.496 },
+]
+
+// MapLibre data-driven expressions
+const FILL_COLOR_EXPR = ['match', ['get', 'risk_level'],
+  'low', RISK.low.fill, 'medium', RISK.medium.fill,
+  'high', RISK.high.fill, 'critical', RISK.critical.fill,
+  RISK.low.fill
+]
+const LINE_COLOR_EXPR = ['match', ['get', 'risk_level'],
+  'low', RISK.low.border, 'medium', RISK.medium.border,
+  'high', RISK.high.border, 'critical', RISK.critical.border,
+  RISK.low.border
+]
+const FLOW_COLOR_EXPR = ['match', ['get', 'intensity'],
+  'high', '#E9695D', 'medium', '#F0D97B', '#8ED2A6'
+]
+
+function computeKpis(zones) {
+  const feats = zones.features
+  return {
+    total:    feats.reduce((s, f) => s + f.properties.count, 0),
+    cap:      feats.reduce((s, f) => s + f.properties.cap,   0),
+    atRisk:   feats.filter(f => ['high', 'critical'].includes(f.properties.risk_level)).length,
+    critical: feats.filter(f => f.properties.risk_level === 'critical').length,
+  }
 }
 
-const floorPlanSvg = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
-  <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
-    <rect width="1200" height="800" fill="#F5F7F4"/>
-    <rect x="110" y="110" width="220" height="160" rx="26" fill="#EAF7F3"/>
-    <rect x="420" y="110" width="260" height="170" rx="26" fill="#F8F3DE"/>
-    <rect x="770" y="110" width="250" height="160" rx="26" fill="#F7E8E5"/>
-    <rect x="110" y="410" width="240" height="180" rx="26" fill="#EAF7F3"/>
-    <rect x="430" y="410" width="260" height="180" rx="26" fill="#F8F3DE"/>
-    <rect x="780" y="410" width="220" height="180" rx="26" fill="#F7E8E5"/>
-    <rect x="300" y="330" width="560" height="60" rx="20" fill="#E7EEF9"/>
-    <path d="M 300 330 L 860 330 L 860 390 L 300 390 Z" fill="none" stroke="#D9E2EF" stroke-width="8"/>
-    <path d="M 500 0 L 500 800" stroke="#E5E7EA" stroke-width="6"/>
-    <path d="M 0 400 L 1200 400" stroke="#E5E7EA" stroke-width="6"/>
-  </svg>
-`)}`
-
-const baseMapStyle = {
-  version: 8,
-  name: 'Crowd map base',
-  sources: {
-    'osm-raster': {
-      type: 'raster',
-      tiles: ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png', 'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png'],
-      tileSize: 256,
-      attribution: '&copy; OpenStreetMap contributors'
-    }
-  },
-  layers: [
-    {
-      id: 'osm-base-layer',
-      type: 'raster',
-      source: 'osm-raster',
-      paint: { 'raster-opacity': 0.82 }
-    }
-  ]
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPONENT
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function LiveMapPage() {
-  const navigate = useNavigate()
-  const mapContainerRef = useRef(null)
-  const mapRef = useRef(null)
-  const popupRef = useRef(null)
-  const [selectedZone, setSelectedZone] = useState(zoneFeatures.features[2].properties)
+  const navigate         = useNavigate()
+  const containerRef     = useRef(null)
+  const mapRef           = useRef(null)
+  const gatePopupRef     = useRef(null)
+  const deviceMarkersRef = useRef([])
+  const hoveredIdRef     = useRef(null)
 
+  const [liveZones,      setLiveZones]      = useState(ZONES)
+  const [selectedZoneId, setSelectedZoneId] = useState('zone-c')
+  const [showDevices,    setShowDevices]    = useState(true)
+  const [showFlow,       setShowFlow]       = useState(true)
+  const [mapReady,       setMapReady]       = useState(false)
+
+  const kpis = computeKpis(liveZones)
+
+  // Derive selected zone safely so it updates during live simulation
+  const selectedZone = useMemo(() => {
+    return liveZones.features.find(f => f.properties.id === selectedZoneId)?.properties || null
+  }, [liveZones, selectedZoneId])
+
+  // ── Map init ────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!mapContainerRef.current || mapRef.current) return
+    if (!containerRef.current || mapRef.current) return
 
     const map = new maplibregl.Map({
-      container: mapContainerRef.current,
-      style: indoorMode
-        ? {
-          version: 8,
-          sources: {
-            'venue-floorplan': {
-              type: 'image',
-              url: floorPlanSvg,
-              coordinates: [
-                [-0.1255, 51.5050],
-                [-0.1162, 51.5050],
-                [-0.1162, 51.4985],
-                [-0.1255, 51.4985]
-              ]
-            }
-          },
-          layers: [{ id: 'venue-floorplan-layer', type: 'raster', source: 'venue-floorplan', paint: { 'raster-opacity': 0.9 } }]
-        } : baseMapStyle,
-      center: defaultCenter,
-      zoom: defaultZoom,
+      container:         containerRef.current,
+      style:             MAP_STYLE,
+      center:            MAP_CENTER,
+      zoom:              MAP_ZOOM,
       attributionControl: false,
       maxZoom: 18,
-      minZoom: 2,
-      fadeDuration: 0
+      minZoom: 10,
     })
 
     mapRef.current = map
-    if (typeof window !== 'undefined') {
-      window.__map = map
-    }
 
     map.on('load', () => {
-      requestAnimationFrame(() => map.resize())
+      map.resize()
 
-      if (indoorMode) {
-        map.addSource('venue-floorplan', {
-          type: 'image',
-          url: floorPlanSvg,
-          coordinates: [
-            [-0.1255, 51.5050],
-            [-0.1162, 51.5050],
-            [-0.1162, 51.4985],
-            [-0.1255, 51.4985]
-          ]
-        })
-
-        map.addLayer({
-          id: 'venue-floorplan-layer',
-          type: 'raster',
-          source: 'venue-floorplan',
-          paint: { 'raster-opacity': 0.85 }
-        })
-      }
-
-      map.addSource('zones', { type: 'geojson', data: zoneFeatures })
+      // ── Zone fill ──────────────────────────────────────────────────────────
+      map.addSource('zones', { type: 'geojson', data: ZONES, promoteId: 'id' })
 
       map.addLayer({
         id: 'zone-fill',
         type: 'fill',
         source: 'zones',
         paint: {
-          'fill-color': ['match', ['get', 'risk_level'], 'low', riskColors.low, 'medium', riskColors.medium, 'high', riskColors.high, 'critical', riskColors.critical, '#8ED2A6'],
-          'fill-opacity': ['case', ['==', ['feature-state', 'hover'], true], 0.8, 0.62]
-        }
+          'fill-color':   FILL_COLOR_EXPR,
+          'fill-opacity': [
+            'case', 
+            ['boolean', ['feature-state', 'hover'], false], 0.85, 
+            ['boolean', ['feature-state', 'selected'], false], 0.95,
+            0.55
+          ],
+        },
       })
 
       map.addLayer({
-        id: 'zone-line',
+        id: 'zone-border',
         type: 'line',
         source: 'zones',
         paint: {
-          'line-color': ['match', ['get', 'risk_level'], 'low', riskColors.low, 'medium', riskColors.medium, 'high', riskColors.high, 'critical', riskColors.critical, '#8ED2A6'],
-          'line-width': 3,
-          'line-opacity': 1
-        }
+          'line-color':   LINE_COLOR_EXPR,
+          'line-width':   [
+            'case', 
+            ['boolean', ['feature-state', 'hover'], false], 3.5, 
+            ['boolean', ['feature-state', 'selected'], false], 4,
+            2
+          ],
+          'line-opacity': 1,
+        },
       })
 
-      map.on('mousemove', 'zone-fill', (event) => {
+      // ── Flow lines ─────────────────────────────────────────────────────────
+      map.addSource('flow', { type: 'geojson', data: FLOW_LINES })
+
+      map.addLayer({
+        id: 'flow-line',
+        type: 'line',
+        source: 'flow',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color':     FLOW_COLOR_EXPR,
+          'line-width':     3,
+          'line-opacity':   0.8,
+          'line-dasharray': [2, 3],
+        },
+      })
+
+      // ── Hover & Selection interaction ──────────────────────────────────────
+      let currentHoverId = null
+      
+      map.on('mousemove', 'zone-fill', (e) => {
         map.getCanvas().style.cursor = 'pointer'
-        if (event.features && event.features[0]) {
-          const featureId = event.features[0].properties.id
-          map.setFeatureState({ source: 'zones', id: featureId }, { hover: true })
+        const id = e.features?.[0]?.id
+        if (id !== undefined && id !== currentHoverId) {
+          if (currentHoverId != null) {
+            map.setFeatureState({ source: 'zones', id: currentHoverId }, { hover: false })
+          }
+          currentHoverId = id
+          map.setFeatureState({ source: 'zones', id }, { hover: true })
         }
       })
 
       map.on('mouseleave', 'zone-fill', () => {
         map.getCanvas().style.cursor = ''
-        const sourceData = map.getSource('zones')
-        if (sourceData && sourceData._data && sourceData._data.features) {
-          sourceData._data.features.forEach((feature) => {
-            map.setFeatureState({ source: 'zones', id: feature.id }, { hover: false })
-          })
+        if (currentHoverId != null) {
+          map.setFeatureState({ source: 'zones', id: currentHoverId }, { hover: false })
+          currentHoverId = null
         }
       })
 
-      map.on('click', 'zone-fill', (event) => {
-        const feature = event.features?.[0]
-        if (!feature) return
-
-        const props = feature.properties
-        setSelectedZone(props)
-        const coords = event.lngLat
-        const popupHtml = `
-          <div style="font-family: Inter, sans-serif; min-width: 180px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:8px;">
-              <div>
-                <div style="font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:#798B99;">Zone</div>
-                <div style="font-family:Georgia, serif; font-size:24px; color:#123047; margin-top:2px;">${props.name}</div>
-              </div>
-              <span style="display:inline-flex; align-items:center; justify-content:center; padding:6px 8px; border-radius:999px; font-size:11px; font-weight:600; background:${riskColors[props.risk_level] || '#8ED2A6'}22; color:${riskColors[props.risk_level] || '#8ED2A6'};">${props.status}</span>
-            </div>
-            <div style="display:grid; gap:6px; font-size:12px; color:#536779;">
-              <div><strong style="color:#123047;">${props.current_count.toLocaleString()}</strong> / ${props.capacity.toLocaleString()}</div>
-              <div>Occupancy: ${props.occupancy_pct}%</div>
-            </div>
-            <a href="/zones" style="display:inline-flex; align-items:center; gap:8px; margin-top:12px; color:#1E6D5B; font-weight:600; text-decoration:none;">View Full Analysis <span>→</span></a>
-          </div>
-        `
-
-        if (popupRef.current) popupRef.current.remove()
-        popupRef.current = new maplibregl.Popup({ closeButton: false, offset: [0, -12], className: 'custom-map-popup' })
-          .setLngLat(coords)
-          .setHTML(popupHtml)
-          .addTo(map)
+      map.on('click', 'zone-fill', (e) => {
+        const id = e.features?.[0]?.id
+        if (id) setSelectedZoneId(id)
       })
 
-      gateMarkers.forEach((marker) => {
+      // ── Gate markers ───────────────────────────────────────────────────────
+      GATES.forEach((gate) => {
         const el = document.createElement('div')
-        el.className = 'map-gateway-marker'
-        el.title = marker.name
+        el.className = `gate-marker gate-marker--${gate.type}`
+        el.title = gate.label
+        el.innerHTML = gate.type === 'entry'
+          ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>`
+          : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`
 
-        const markerInstance = new maplibregl.Marker({ element: el, anchor: 'center' })
-          .setLngLat([marker.lng, marker.lat])
-          .addTo(map)
-
-        markerInstance.getElement().addEventListener('click', () => {
-          if (popupRef.current) popupRef.current.remove()
-          const gatewayProps = {
-            name: marker.name,
-            current_count: 750,
-            capacity: 800,
-            occupancy_pct: 94,
-            status: 'Medium risk',
-            risk_level: 'medium'
-          }
-          setSelectedZone(gatewayProps)
-          popupRef.current = new maplibregl.Popup({ closeButton: false, className: 'custom-map-popup', offset: [0, -10] })
-            .setLngLat([marker.lng, marker.lat])
-            .setHTML(`<div style="font-family: Inter, sans-serif; min-width: 170px;"><div style="font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:#798B99;">Gate</div><div style="font-family:Georgia, serif; font-size:24px; color:#123047; margin-top:2px;">${marker.name}</div><div style="margin-top:8px; font-size:12px; color:#536779;">Crowd flow is stable</div></div>`)
+        el.addEventListener('click', (ev) => {
+          ev.stopPropagation()
+          if (gatePopupRef.current) gatePopupRef.current.remove()
+          gatePopupRef.current = new maplibregl.Popup({ closeButton: true, className: 'crowd-popup', offset: [0, -12] })
+            .setLngLat([gate.lng, gate.lat])
+            .setHTML(`<div style="font-family:Inter,sans-serif;padding:2px 0;"><div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#798B99;margin-bottom:3px;">${gate.type === 'entry' ? 'Entry' : 'Exit'} Point</div><div style="font-family:Georgia,serif;font-size:20px;color:#123047;">${gate.label}</div><div style="margin-top:8px;font-size:12px;color:#536779;">Crowd flow is stable</div></div>`)
             .addTo(map)
         })
+
+        new maplibregl.Marker({ element: el, anchor: 'center' })
+          .setLngLat([gate.lng, gate.lat])
+          .addTo(map)
       })
+
+      // ── Device markers ─────────────────────────────────────────────────────
+      DEVICES.forEach((dev) => {
+        const el = document.createElement('div')
+        el.className = 'device-dot'
+        
+        const m = new maplibregl.Marker({ element: el, anchor: 'center' })
+          .setLngLat([dev.lng, dev.lat])
+          .addTo(map)
+
+        deviceMarkersRef.current.push({ el, marker: m })
+      })
+
+      setMapReady(true)
     })
 
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
-
-    const resetButton = document.getElementById('reset-map-view')
-    if (resetButton) {
-      resetButton.onclick = () => {
-        map.flyTo({ center: defaultCenter, zoom: defaultZoom, essential: true })
-      }
-    }
-
     return () => {
-      if (popupRef.current) popupRef.current.remove()
+      if (gatePopupRef.current) { gatePopupRef.current.remove(); gatePopupRef.current = null }
+      deviceMarkersRef.current = []
       map.remove()
       mapRef.current = null
     }
   }, [])
 
+  // ── Sync Selection State to MapLibre ────────────────────────────────────────
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !mapReady) return
+
+    // Clear old selection state
+    ZONES.features.forEach(f => {
+      map.setFeatureState({ source: 'zones', id: f.id }, { selected: false })
+    })
+
+    // Set new selection state
+    if (selectedZoneId) {
+      map.setFeatureState({ source: 'zones', id: selectedZoneId }, { selected: true })
+    }
+  }, [selectedZoneId, mapReady])
+
+  // ── Sync flow layer visibility ──────────────────────────────────────────────
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !mapReady) return
+    try {
+      map.setLayoutProperty('flow-line', 'visibility', showFlow ? 'visible' : 'none')
+    } catch (_) {}
+  }, [showFlow, mapReady])
+
+  // ── Sync device marker visibility ───────────────────────────────────────────
+  useEffect(() => {
+    deviceMarkersRef.current.forEach(({ el }) => {
+      el.style.display = showDevices ? 'block' : 'none'
+    })
+  }, [showDevices])
+
+  // ── Live simulation (mock real-time updates every 4 s) ──────────────────────
+  useEffect(() => {
+    const id = setInterval(() => {
+      setLiveZones(prev => {
+        const updated = {
+          ...prev,
+          features: prev.features.map(f => {
+            const delta    = Math.round((Math.random() - 0.47) * 80)
+            const newCount = Math.max(0, Math.min(f.properties.cap, f.properties.count + delta))
+            const pct      = Math.round((newCount / f.properties.cap) * 100)
+            const rl       = pct >= 90 ? 'critical' : pct >= 75 ? 'high' : pct >= 60 ? 'medium' : 'low'
+            return { ...f, properties: { ...f.properties, count: newCount, pct, risk_level: rl } }
+          })
+        }
+
+        // Push to map source
+        const map = mapRef.current
+        if (map && mapReady) {
+          try { map.getSource('zones')?.setData(updated) } catch (_) {}
+        }
+
+        return updated
+      })
+    }, 4000)
+    return () => clearInterval(id)
+  }, [mapReady])
+
+
+  // ── Controls ────────────────────────────────────────────────────────────────
+  const zoomIn  = () => mapRef.current?.zoomIn({ duration: 250 })
+  const zoomOut = () => mapRef.current?.zoomOut({ duration: 250 })
+  const reset   = () => {
+    if (gatePopupRef.current) { gatePopupRef.current.remove(); gatePopupRef.current = null }
+    mapRef.current?.flyTo({ center: MAP_CENTER, zoom: MAP_ZOOM, duration: 700 })
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // RENDER
+  // ─────────────────────────────────────────────────────────────────────────────
+  
+  const selRisk = selectedZone ? (RISK[selectedZone.risk_level] || RISK.low) : null
+
   return (
-    <div className="p-4 lg:p-6 max-w-7xl mx-auto space-y-6">
-      <div>
-        <p className="text-[11px] uppercase tracking-[0.18em] text-ink-faint font-semibold">LIVE MAP</p>
-        <h1 className="mt-2 font-display text-4xl text-ink">Crowd movement overview</h1>
+    <div className="min-h-full bg-white p-4 lg:p-8 flex flex-col gap-8">
+
+      {/* ── Header Row ─────────────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="flex items-center gap-3 mb-1">
+            <h1 className="font-display text-4xl text-[#1E6D5B]">Live Map</h1>
+            <span className="flex items-center gap-1.5 rounded-full bg-[#EAF7F3] px-3 py-1 text-sm border border-[#A9DCC7]">
+              <span className="w-2 h-2 rounded-full bg-[#22A66F] animate-pulse inline-block" />
+              <span className="text-[#1E6D5B] font-medium tracking-wide">LIVE</span>
+            </span>
+          </div>
+          <p className="text-sm text-[#536779]">Real-time crowd movement and zone occupancy overview.</p>
+        </div>
       </div>
 
-      <div className="panel p-4 lg:p-5">
-        <div className="relative h-[620px] overflow-hidden rounded-[28px] border border-[#EEF1EE] bg-[#F7F8F7]">
-          <div ref={mapContainerRef} className="absolute inset-0" />
-
-          <div className="absolute left-5 top-5 z-20 flex items-center gap-2 rounded-full bg-white px-3 py-2 shadow-sm border border-[#EEF1EE] text-sm text-ink">
-            <MapPinned size={15} className="text-[#1E6D5B]" />
-            Meridian Arena District
-          </div>
-
-          <div className="absolute right-4 top-4 z-20 flex flex-col gap-2">
-            <button
-              id="reset-map-view"
-              type="button"
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#EEF1EE] bg-white text-[#123047] shadow-sm hover:bg-[#F7F7F5]"
-              aria-label="Reset map view"
-            >
-              <RotateCcw size={16} />
-            </button>
-          </div>
-
-          <div className="absolute left-5 bottom-5 z-20 rounded-2xl border border-[#EEF1EE] bg-white p-3 shadow-panel">
-            <p className="text-[10px] uppercase tracking-[0.14em] text-ink-faint mb-2">Risk legend</p>
-            <div className="space-y-2 text-xs text-ink-dim">
-              <div className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-[#8ED2A6]" />Low</div>
-              <div className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-[#F0D97B]" />Medium</div>
-              <div className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-[#E9695D]" />High</div>
+      {/* ── KPI Cards ──────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Total Crowd', value: kpis.total.toLocaleString(), sub: `/ ${kpis.cap.toLocaleString()}`, icon: Users, color: 'text-[#1E6D5B]', bg: 'bg-[#EAF7F3]' },
+          { label: 'Critical Zones', value: kpis.critical, sub: 'Requires action', icon: AlertTriangle, color: 'text-[#E9695D]', bg: 'bg-[#FDE9E7]' },
+          { label: 'At Risk Zones', value: kpis.atRisk, sub: 'Elevated occupancy', icon: ShieldAlert, color: 'text-[#F0864B]', bg: 'bg-[#FFF2E7]' },
+          { label: 'Map Status', value: 'Active', sub: 'Receiving updates', icon: Activity, color: 'text-[#22A66F]', bg: 'bg-[#EAF7F0]' },
+        ].map((kpi, idx) => (
+          <div key={idx} className="bg-white border border-[#EEF1EE] rounded-2xl p-5 shadow-sm flex items-start gap-4">
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${kpi.bg} ${kpi.color}`}>
+              <kpi.icon size={22} strokeWidth={2.5} />
             </div>
-          </div>
-
-          <div className="absolute bottom-5 right-5 z-20 w-[260px] rounded-2xl border border-[#EEF1EE] bg-white p-4 shadow-panel">
-            <p className="text-[10px] uppercase tracking-[0.14em] text-ink-faint">Selected zone</p>
-            <div className="mt-3 flex items-center justify-between gap-3">
-              <div>
-                <h3 className="font-display text-2xl text-ink">{selectedZone.name}</h3>
-                <p className="text-[12px] text-ink-dim">{selectedZone.current_count.toLocaleString()} / {selectedZone.capacity.toLocaleString()}</p>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#1E6D5B] mb-1 opacity-80">{kpi.label}</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-[#123047]">{kpi.value}</span>
+                {kpi.sub && <span className="text-xs font-medium text-[#798B99]">{kpi.sub}</span>}
               </div>
-              <span className="rounded-full px-2.5 py-1 text-[11px] font-medium" style={{ backgroundColor: `${riskColors[selectedZone.risk_level]}22`, color: riskColors[selectedZone.risk_level] }}>
-                {selectedZone.status}
-              </span>
             </div>
-            <button type="button" onClick={() => navigate('/zones')} className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-[#1E6D5B]">
-              View Full Analysis <ArrowRight size={15} />
-            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Main Split View ────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 min-h-[650px]">
+        
+        {/* Map Column (takes 3/4 width) */}
+        <div className="lg:col-span-3 bg-white border border-[#EEF1EE] rounded-3xl shadow-sm flex flex-col overflow-hidden">
+          
+          {/* Map Toolbar */}
+          <div className="px-5 py-3 border-b border-[#EEF1EE] flex items-center justify-between bg-[#FAFCFB]">
+            <div className="flex items-center gap-2 text-sm font-medium text-[#1E6D5B]">
+              <MapPin size={16} />
+              Meridian Arena District
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowFlow(v => !v)}
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors
+                  ${showFlow ? 'border-[#1E6D5B] bg-[#1E6D5B] text-white shadow-sm' : 'border-[#EEF1EE] bg-white text-[#536779] hover:bg-[#F3F6F4]'}`}
+              >
+                <Activity size={14} /> Crowd Flow
+              </button>
+              <button
+                onClick={() => setShowDevices(v => !v)}
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors
+                  ${showDevices ? 'border-[#1E6D5B] bg-[#1E6D5B] text-white shadow-sm' : 'border-[#EEF1EE] bg-white text-[#536779] hover:bg-[#F3F6F4]'}`}
+              >
+                {showDevices ? <Eye size={14} /> : <EyeOff size={14} />} Devices
+              </button>
+            </div>
+          </div>
+
+          {/* MapLibre Canvas Container */}
+          <div className="relative flex-1 w-full bg-[#E5E9E6] min-h-[500px]">
+            <div ref={containerRef} className="absolute inset-0 w-full h-full" />
+
+            {/* Zoom / Reset Controls */}
+            <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
+              <button onClick={zoomIn} aria-label="Zoom In" className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#EEF1EE] bg-white text-[#1E6D5B] shadow-sm hover:bg-[#F3F6F4] transition-all">
+                <Plus size={18} />
+              </button>
+              <button onClick={zoomOut} aria-label="Zoom Out" className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#EEF1EE] bg-white text-[#1E6D5B] shadow-sm hover:bg-[#F3F6F4] transition-all">
+                <Minus size={18} />
+              </button>
+              <button onClick={reset} aria-label="Reset Map" className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#EEF1EE] bg-white text-[#1E6D5B] shadow-sm hover:bg-[#F3F6F4] transition-all mt-2">
+                <RotateCcw size={16} />
+              </button>
+            </div>
+
+            {/* Risk Legend Overlay */}
+            <div className="absolute bottom-5 left-5 z-10 rounded-2xl border border-[#EEF1EE] bg-white/95 backdrop-blur-md p-4 shadow-lg w-40">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#1E6D5B] mb-3 opacity-80">Map Legend</p>
+              <div className="space-y-2.5">
+                {Object.entries(RISK).map(([key, r]) => (
+                  <div key={key} className="flex items-center gap-3">
+                    <span className="h-3.5 w-3.5 rounded flex-shrink-0" style={{ background: r.fill, border: `2px solid ${r.border}` }} />
+                    <span className="text-xs font-medium text-[#123047]">{r.label} Risk</span>
+                  </div>
+                ))}
+                <div className="border-t border-[#EEF1EE] pt-3 mt-1 space-y-2.5">
+                  <div className="flex items-center gap-3">
+                    <span className="w-4 h-4 rounded-full bg-[#EAF7F3] border-[2.5px] border-[#1E6D5B] flex-shrink-0" />
+                    <span className="text-xs font-medium text-[#123047]">Entry Gate</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="w-4 h-4 rounded-full bg-[#FDE9E7] border-[2.5px] border-[#E9695D] flex-shrink-0" />
+                    <span className="text-xs font-medium text-[#123047]">Exit Gate</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#1E6D5B] flex-shrink-0 ml-0.5" />
+                    <span className="text-xs font-medium text-[#123047]">Scanner Device</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Sidebar / Details Column (takes 1/4 width) */}
+        <div className="lg:col-span-1 flex flex-col gap-4">
+          
+          <div className="bg-white border border-[#EEF1EE] rounded-3xl p-6 shadow-sm flex-1 flex flex-col">
+            <h2 className="font-semibold text-sm uppercase tracking-widest text-[#1E6D5B] mb-6 flex items-center gap-2 opacity-80">
+              <BarChart3 size={16} /> Zone Details
+            </h2>
+
+            {selectedZone ? (
+              <div className="flex flex-col h-full">
+                {/* Zone Header */}
+                <div className="mb-6">
+                  <h3 className="font-display text-3xl text-[#123047] mb-1">{selectedZone.name}</h3>
+                  <p className="text-[13px] font-medium text-[#536779]">{selectedZone.sub}</p>
+                </div>
+
+                {/* Risk Badge */}
+                <div className="mb-8">
+                  <span className="inline-flex px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider"
+                    style={{ background: selRisk.bg, color: selRisk.text, border: `1px solid ${selRisk.border}40` }}>
+                    {selRisk.label} Risk
+                  </span>
+                </div>
+
+                {/* Occupancy Progress */}
+                <div className="bg-[#FAFCFB] border border-[#EEF1EE] rounded-2xl p-5 mb-8">
+                  <div className="flex justify-between items-end mb-3">
+                    <span className="text-sm font-semibold text-[#536779]">Live Occupancy</span>
+                    <span className="text-2xl font-bold text-[#123047] leading-none">{selectedZone.pct}%</span>
+                  </div>
+                  
+                  <div className="h-2.5 rounded-full bg-[#E5E9E6] overflow-hidden mb-3">
+                    <div className="h-full rounded-full transition-all duration-700 ease-out"
+                      style={{ width: `${selectedZone.pct}%`, background: selRisk.border }} />
+                  </div>
+                  
+                  <div className="flex justify-between text-xs font-medium">
+                    <span className="text-[#123047]">{Number(selectedZone.count).toLocaleString()} Present</span>
+                    <span className="text-[#798B99]">Cap {Number(selectedZone.cap).toLocaleString()}</span>
+                  </div>
+                </div>
+
+                <div className="mt-auto pt-4 border-t border-[#EEF1EE]">
+                  <button 
+                    onClick={() => navigate('/zones')}
+                    className="w-full flex items-center justify-between bg-[#1E6D5B] hover:bg-[#114E42] text-white px-5 py-3.5 rounded-xl text-sm font-semibold transition-colors shadow-sm"
+                  >
+                    View Full Zone Analysis
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
+                <div className="w-16 h-16 rounded-full bg-[#FAFCFB] border border-[#EEF1EE] flex items-center justify-center mb-4 text-[#A9DCC7]">
+                  <MapPin size={28} />
+                </div>
+                <p className="text-[#1E6D5B] font-semibold text-lg mb-2">No Zone Selected</p>
+                <p className="text-sm text-[#536779]">Click on any zone polygon on the map to view real-time occupancy and risk data.</p>
+              </div>
+            )}
+          </div>
+          
+        </div>
+
       </div>
     </div>
   )
