@@ -18,47 +18,47 @@ export default function Login({ onLogin }) {
   const handleSubmit = (e) => {
     e.preventDefault()
     const role = ROLES.find((r) => r.id === roleId)
-    onLogin(role.label)
+    if (!role) return
+
+    onLogin(role)
     navigate('/dashboard')
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-base px-4 relative overflow-hidden">
-      <div className="absolute -top-40 -left-40 w-[520px] h-[520px] rounded-full bg-brand-600/20 blur-[120px]" />
-      <div className="absolute -bottom-40 -right-40 w-[520px] h-[520px] rounded-full bg-status-info/10 blur-[120px]" />
+    <div className="min-h-screen flex items-center justify-center bg-[#FAF9F6] px-4 relative overflow-hidden">
+      <div className="absolute -top-40 -left-40 w-[440px] h-[440px] rounded-full bg-[#EAF7F3] blur-[120px]" />
+      <div className="absolute -bottom-32 -right-32 w-[440px] h-[440px] rounded-full bg-[#EAF0FF] blur-[120px]" />
 
-      <div className="relative w-full max-w-[920px] grid lg:grid-cols-[1.1fr_1fr] rounded-2xl overflow-hidden border border-base-hair shadow-panel">
-        <div className="hidden lg:flex flex-col justify-between p-9 bg-base-raised bg-grid-fade">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-400 to-brand-700 flex items-center justify-center">
-              <Activity size={18} className="text-base" strokeWidth={2.5} />
+      <div className="relative w-full max-w-[980px] grid lg:grid-cols-[1.08fr_0.92fr] overflow-hidden rounded-[28px] border border-[#E7E6E1] bg-white shadow-panel">
+        <div className="hidden lg:flex flex-col justify-between p-9 bg-[#F5F7F4]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#0E3D34] text-white flex items-center justify-center">
+              <Activity size={18} strokeWidth={2.5} />
             </div>
             <div>
-              <p className="font-display font-semibold text-[16px]">Pulse Command</p>
+              <p className="font-display text-[18px] text-ink">Pulse Command</p>
               <p className="text-[11px] text-ink-faint">Mega-Event Crowd Orchestration</p>
             </div>
           </div>
 
           <div>
-            <p className="font-display text-[26px] leading-tight font-semibold text-ink">
-              One control room for<br />every gate, zone and route.
-            </p>
-            <p className="text-[13px] text-ink-dim mt-3 max-w-[320px]">
+            <p className="font-display text-[30px] leading-tight text-ink">One control room for every gate, zone and route.</p>
+            <p className="text-[13px] text-ink-dim mt-3 max-w-[340px]">
               Live occupancy, predictive risk and AI-drafted redistribution plans for {EVENT.name}.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 text-[12px] text-ink-faint">
-            <ShieldCheck size={14} className="text-brand-400" />
-            Role-based access · Firebase Auth
+          <div className="flex items-center gap-2 text-[12px] text-ink-dim">
+            <ShieldCheck size={14} className="text-[#1E6D5B]" />
+            Role-based access · local simulation engine
           </div>
         </div>
 
-        <div className="bg-base-panel p-8 sm:p-10">
-          <p className="text-[11px] uppercase tracking-[0.14em] text-ink-faint mb-1.5">Sign in</p>
-          <h1 className="font-display font-semibold text-[21px] mb-6">Welcome back</h1>
+        <div className="bg-white p-8 sm:p-10">
+          <p className="text-[11px] uppercase tracking-[0.16em] text-ink-faint mb-2">Sign in</p>
+          <h1 className="font-display font-semibold text-[26px] text-ink mb-6">Welcome back</h1>
 
-          <div className="grid grid-cols-3 gap-1.5 mb-6 p-1 rounded-lg bg-base border border-base-hair">
+          <div className="grid grid-cols-3 gap-1.5 mb-6 p-1 rounded-xl bg-[#F5F7F4] border border-[#E7E6E1]">
             {ROLES.map((r) => (
               <button
                 key={r.id}
@@ -67,8 +67,8 @@ export default function Login({ onLogin }) {
                   setRoleId(r.id)
                   setEmail(r.email)
                 }}
-                className={`text-[11px] py-1.5 rounded-md transition-colors ${
-                  roleId === r.id ? 'bg-brand-500/15 text-brand-300' : 'text-ink-faint hover:text-ink-dim'
+                className={`text-[11px] py-2 rounded-lg transition-colors ${
+                  roleId === r.id ? 'bg-[#0E3D34] text-white' : 'text-ink-dim hover:text-ink'
                 }`}
               >
                 {r.label}
@@ -89,7 +89,7 @@ export default function Login({ onLogin }) {
 
             <button
               type="submit"
-              className="w-full flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-400 text-base font-medium text-[14px] py-2.5 rounded-lg transition-colors mt-2"
+              className="w-full flex items-center justify-center gap-2 bg-[#0E3D34] hover:bg-[#114E42] text-white font-medium text-[14px] py-2.75 rounded-xl transition-colors mt-2"
             >
               Enter command center <ArrowRight size={15} />
             </button>
@@ -108,7 +108,7 @@ function Field({ icon: Icon, label, type, value, onChange, placeholder }) {
   return (
     <label className="block">
       <span className="text-[11.5px] text-ink-dim mb-1.5 block">{label}</span>
-      <div className="flex items-center gap-2.5 rounded-lg border border-base-hair bg-base px-3 py-2.5 focus-within:border-brand-500/50 transition-colors">
+      <div className="flex items-center gap-2.5 rounded-xl border border-[#E7E6E1] bg-[#F9FAF8] px-3 py-2.5 focus-within:border-[#0E3D34]/30 transition-colors">
         <Icon size={15} className="text-ink-faint shrink-0" />
         <input
           type={type}
