@@ -1,16 +1,30 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, CircleDot, Menu, ShieldAlert, User } from 'lucide-react'
+import { Bell, CircleDot, Menu, ShieldAlert, User, LogOut } from 'lucide-react'
 import { EVENT } from '../../data/mockData.js'
 
-export default function Header({ alertCount, onMenuClick }) {
+export default function Header({ alertCount, onMenuClick, onLogout }) {
   const navigate = useNavigate()
   const [now, setNow] = useState(new Date())
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const menuRef = useRef(null)
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(id)
   }, [])
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setProfileMenuOpen(false)
+      }
+    }
+    if (profileMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [profileMenuOpen])
 
   return (
     <header className="h-14 shrink-0 flex items-center justify-between px-4 lg:px-6 border-b border-border-default bg-surface-panel sticky top-0 z-30 select-none">
@@ -71,20 +85,54 @@ export default function Header({ alertCount, onMenuClick }) {
           )}
         </button>
 
-        {/* Operator Profile Shortcut */}
-        <button
-          type="button"
-          onClick={() => navigate('/profile')}
-          className="flex items-center gap-2 rounded-[4px] border border-border-default bg-surface-raised px-2 py-1 hover:border-accent/40 transition-colors"
-          title="Operator Profile"
-        >
-          <div className="w-6 h-6 rounded-[3px] bg-accent/20 border border-accent/40 text-accent text-[10.5px] font-mono font-bold flex items-center justify-center">
-            <User size={13} />
-          </div>
-          <span className="hidden md:inline-block text-[11.5px] font-medium text-ink-dim">
-            Profile
-          </span>
-        </button>
+        {/* Operator Profile Menu */}
+        <div className="relative" ref={menuRef}>
+          <button
+            type="button"
+            onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+            className={`flex items-center gap-2 rounded-[4px] border border-border-default px-2 py-1 transition-colors ${
+              profileMenuOpen ? 'bg-surface-overlay border-accent/40' : 'bg-surface-raised hover:border-accent/40'
+            }`}
+            title="Operator Profile"
+          >
+            <div className="w-6 h-6 rounded-[3px] bg-accent/20 border border-accent/40 text-accent text-[10.5px] font-mono font-bold flex items-center justify-center">
+              <User size={13} />
+            </div>
+            <span className="hidden md:inline-block text-[11.5px] font-medium text-ink-dim">
+              Profile
+            </span>
+          </button>
+
+          {profileMenuOpen && (
+            <div className="absolute right-0 top-full mt-2 w-48 rounded-[6px] bg-surface-overlay border border-border-default shadow-xl p-1.5 flex flex-col gap-1 z-50">
+              <div className="px-2.5 py-2 border-b border-border-default mb-1">
+                <p className="text-[10px] font-mono tracking-widest uppercase text-ink-faint">Operator</p>
+                <p className="text-[12.5px] font-medium text-ink mt-0.5">Active Session</p>
+              </div>
+              <button
+                onClick={() => {
+                  setProfileMenuOpen(false)
+                  navigate('/profile')
+                }}
+                className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-[4px] text-[12.5px] text-ink-dim hover:text-ink hover:bg-surface-raised transition-colors"
+              >
+                <User size={14} />
+                <span>My Profile</span>
+              </button>
+              <button
+                onClick={() => {
+                  setProfileMenuOpen(false)
+                  onLogout?.()
+                  navigate('/')
+                }}
+                className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-[4px] text-[12.5px] text-status-critical hover:bg-status-critical/10 transition-colors"
+              >
+                <LogOut size={14} />
+                <span>Sign out</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   )

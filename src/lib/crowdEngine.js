@@ -285,6 +285,22 @@ export function useCrowdEngine() {
     setRunning(true)
   }, [])
 
+  const addZone = useCallback((name, capacity) => {
+    const id = `zone-${Math.random().toString(36).substr(2, 6)}`
+    const newZone = {
+      id,
+      name,
+      capacity: parseInt(capacity, 10) || 1000,
+      count: 0,
+      incoming: 2,
+      outgoing: 1,
+      netFlow: 1,
+      x: 10, y: 10, w: 30, h: 30, neighbors: []
+    }
+    setZones((prev) => [...prev, newZone])
+    pushLog(`Added new zone: ${name} (Capacity: ${newZone.capacity}).`)
+  }, [pushLog])
+
   const network = useMemo(
     () => ({
       bandsActive: SMART_BANDS_ACTIVE + (tick % 40) * 3,
@@ -315,6 +331,7 @@ export function useCrowdEngine() {
     setRunning,
     setDemoScenario,
     resetSimulation,
+    addZone,
     acknowledgeAlert,
     resolveAlert,
     approveRecommendation,

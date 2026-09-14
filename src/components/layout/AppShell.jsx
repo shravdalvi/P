@@ -10,19 +10,19 @@ export default function AppShell({ role, onLogout }) {
 
   return (
     <div className="flex h-screen overflow-hidden bg-surface-base">
-      <Sidebar role={role} onLogout={onLogout} />
+      <Sidebar role={role} />
 
       {mobileOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div className="absolute inset-0 bg-black/30" onClick={() => setMobileOpen(false)} />
           <div className={`absolute left-0 top-0 h-full w-72 transition-transform duration-300 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-            <Sidebar role={role} onLogout={onLogout} mobile />
+            <Sidebar role={role} mobile />
           </div>
         </div>
       )}
 
       <div className="flex-1 flex flex-col min-w-0 bg-surface-base">
-        <Header alertCount={engine.kpis.activeAlerts} onMenuClick={() => setMobileOpen(true)} />
+        <Header alertCount={engine.kpis.activeAlerts} onMenuClick={() => setMobileOpen(true)} onLogout={onLogout} />
         <main className="flex-1 overflow-y-auto bg-surface-base">
           <Outlet context={engine} />
         </main>

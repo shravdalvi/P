@@ -15,22 +15,15 @@ maplibregl.setWorkerUrl(maplibreWorker)
 // VENUE DIGITAL TWIN GEOMETRY & STYLE
 // ─────────────────────────────────────────────────────────────────────────────
 
-const MAP_CENTER = [0.001, -0.0005]
+const MAP_OFFSET = [-74.0060, 40.7128] // Manhattan spatial foundation
+const MAP_CENTER = [0.001 + MAP_OFFSET[0], -0.0005 + MAP_OFFSET[1]]
 const MAP_ZOOM = 14.8
 
-const VENUE_BASE_STYLE = {
-  version: 8,
-  name: 'MeridianArenaDigitalTwin',
-  sources: {},
-  layers: [
-    {
-      id: 'venue-canvas',
-      type: 'background',
-      paint: {
-        'background-color': '#0B0F14'
-      }
-    }
-  ]
+function applyOffset(coords) {
+  if (typeof coords[0] === 'number') {
+    return [coords[0] + MAP_OFFSET[0], coords[1] + MAP_OFFSET[1]]
+  }
+  return coords.map(applyOffset)
 }
 
 const RISK_COLORS = {
@@ -128,7 +121,8 @@ function buildZonesGeoJSON(zones) {
   return {
     type: 'FeatureCollection',
     features: zones.map((z) => {
-      const coords = ZONE_COORDS[z.id] || [[-0.002, 0.002], [0.002, 0.002], [0.002, -0.002], [-0.002, -0.002], [-0.002, 0.002]]
+      const baseCoords = ZONE_COORDS[z.id] || [[-0.002, 0.002], [0.002, 0.002], [0.002, -0.002], [-0.002, -0.002], [-0.002, 0.002]]
+      const coords = applyOffset(baseCoords)
       const colorObj = RISK_COLORS[z.risk] || RISK_COLORS.safe
       return {
         type: 'Feature',
@@ -162,8 +156,8 @@ function buildFlowGeoJSON(zones) {
       z.neighbors.forEach((nId) => {
         const neighbor = zones.find((item) => item.id === nId)
         if (neighbor && neighbor.ratio < z.ratio && ZONE_COORDS[z.id] && ZONE_COORDS[neighbor.id]) {
-          const start = getCenter(ZONE_COORDS[z.id])
-          const end = getCenter(ZONE_COORDS[neighbor.id])
+          const start = getCenter(applyOffset(ZONE_COORDS[z.id]))
+          const end = getCenter(applyOffset(ZONE_COORDS[neighbor.id]))
           features.push({
             type: 'Feature',
             properties: {
@@ -223,7 +217,7 @@ export default function LiveMapPage() {
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: VENUE_BASE_STYLE,
+      style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
       center: MAP_CENTER,
       zoom: MAP_ZOOM,
       attributionControl: false,
@@ -237,7 +231,14 @@ export default function LiveMapPage() {
       map.resize()
 
       // 1. Venue Infrastructure Source & Layers
-      map.addSource('venue-infra', { type: 'geojson', data: VENUE_INFRA })
+      const offsetVenueInfra = {
+        ...VENUE_INFRA,
+        features: VENUE_INFRA.features.map(f => ({
+          ...f,
+          geometry: { ...f.geometry, coordinates: applyOffset(f.geometry.coordinates) }
+        }))
+      }
+      map.addSource('venue-infra', { type: 'geojson', data: offsetVenueInfra })
 
       map.addLayer({
         id: 'venue-perimeter',
@@ -384,7 +385,7 @@ export default function LiveMapPage() {
           ev.stopPropagation()
           if (popupRef.current) popupRef.current.remove()
           popupRef.current = new maplibregl.Popup({ closeButton: true, className: 'crowd-popup', offset: [0, -12] })
-            .setLngLat([gate.lng, gate.lat])
+            .setLngLat([gate.lng + MAP_OFFSET[0], gate.lat + MAP_OFFSET[1]])
             .setHTML(`
               <div style="font-family:Inter,sans-serif;padding:3px 0;">
                 <div style="font-size:10px;font-family:monospace;letter-spacing:.12em;text-transform:uppercase;color:#8B949E;">${gate.type.toUpperCase()} POINT</div>
@@ -396,7 +397,7 @@ export default function LiveMapPage() {
         })
 
         const m = new maplibregl.Marker({ element: el, anchor: 'center' })
-          .setLngLat([gate.lng, gate.lat])
+          .setLngLat([gate.lng + MAP_OFFSET[0], gate.lat + MAP_OFFSET[1]])
           .addTo(map)
 
         markersRef.current.push({ el, marker: m, type: 'gate' })
@@ -417,7 +418,7 @@ export default function LiveMapPage() {
         el.title = `${gw.id} (${gw.status || 'online'})`
 
         const m = new maplibregl.Marker({ element: el, anchor: 'center' })
-          .setLngLat([gw.lng, gw.lat])
+          .setLngLat([gw.lng + MAP_OFFSET[0], gw.lat + MAP_OFFSET[1]])
           .addTo(map)
 
         markersRef.current.push({ el, marker: m, type: 'device' })

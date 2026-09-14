@@ -38,9 +38,39 @@ export default function CrowdMap({ zones, selectedZoneId, onSelect }) {
           <rect width={width} height={height} fill="#161B22" rx="10" />
           <rect width={width} height={height} fill="url(#grid)" rx="10" />
 
+          {/* DIRECTIONAL WAVES / FLOWS (rendered beneath zones) */}
+          {flows.map((z) => {
+            const target = zones.find((n) => n.neighbors?.includes(z.id) && n.ratio < z.ratio)
+            if (!target) return null
+            const x1 = z.x + z.w / 2
+            const y1 = z.y + z.h / 2
+            const x2 = target.x + target.w / 2
+            const y2 = target.y + target.h / 2
+
+            // Subtle bezier curve for flow
+            const dx = x2 - x1
+            const dy = y2 - y1
+            const cx = x1 + dx * 0.5 - dy * 0.25
+            const cy = y1 + dy * 0.5 + dx * 0.25
+
+            return (
+              <path
+                key={`flow-${z.id}`}
+                d={`M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`}
+                fill="none"
+                stroke="#58A6A6"
+                strokeWidth="1.5"
+                strokeDasharray="4 4"
+                className="flow-line"
+                opacity="0.6"
+              />
+            )
+          })}
+
           {zones.map((z) => {
             const isSelected = z.id === selectedZoneId
             const fill = RISK_FILL[z.risk] ?? RISK_FILL.safe
+
             return (
               <g
                 key={z.id}
@@ -48,17 +78,28 @@ export default function CrowdMap({ zones, selectedZoneId, onSelect }) {
                 onClick={() => onSelect(z.id)}
                 className="cursor-pointer"
               >
+                {/* Base Zone Plate */}
                 <rect
                   width={z.w}
                   height={z.h}
                   rx="6"
-                  fill={fill}
-                  fillOpacity={isSelected ? 0.28 : 0.15}
+                  fill="#1C2128"
+                  fillOpacity={0.4}
                   stroke={fill}
-                  strokeOpacity={isSelected ? 0.95 : 0.45}
+                  strokeOpacity={isSelected ? 0.95 : 0.3}
                   strokeWidth={isSelected ? 2 : 1}
                   className={z.risk === 'critical' || z.risk === 'overcapacity' ? 'critical-pulse' : ''}
                 />
+
+                {/* Subtle Real-Time Heat/Pressure Visualization */}
+                {z.ratio > 0.05 && (
+                  <g className="pointer-events-none transition-all duration-700 ease-out">
+                    <circle cx={z.w / 2} cy={z.h / 2} r={(Math.min(z.w, z.h) * 0.55) * z.ratio} fill={fill} fillOpacity={0.06} />
+                    <circle cx={z.w / 2} cy={z.h / 2} r={(Math.min(z.w, z.h) * 0.35) * z.ratio} fill={fill} fillOpacity={0.12} />
+                    <circle cx={z.w / 2} cy={z.h / 2} r={(Math.min(z.w, z.h) * 0.15) * z.ratio} fill={fill} fillOpacity={0.25} />
+                  </g>
+                )}
+
                 <text x="10" y="20" fontSize="11.5" fontFamily="Space Grotesk, sans-serif" fontWeight="600" fill="#E6EDF3">
                   {z.name.split('·')[0].trim()}
                 </text>
@@ -86,28 +127,6 @@ export default function CrowdMap({ zones, selectedZoneId, onSelect }) {
                   {z.count}/{z.capacity}
                 </text>
               </g>
-            )
-          })}
-
-          {flows.map((z) => {
-            const target = zones.find((n) => n.neighbors?.includes(z.id) && n.ratio < z.ratio)
-            if (!target) return null
-            const x1 = z.x + z.w / 2
-            const y1 = z.y + z.h / 2
-            const x2 = target.x + target.w / 2
-            const y2 = target.y + target.h / 2
-            return (
-              <line
-                key={`flow-${z.id}`}
-                x1={x1}
-                y1={y1}
-                x2={x2}
-                y2={y2}
-                stroke="#58A6A6"
-                strokeWidth="1.6"
-                className="flow-line"
-                opacity="0.8"
-              />
             )
           })}
         </svg>
