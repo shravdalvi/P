@@ -1,11 +1,11 @@
 import { RISK_STYLES } from '../../lib/statusStyles.js'
 
 const RISK_FILL = {
-  safe: '#49D17A',
-  moderate: '#E8B93F',
-  high: '#F0873F',
-  critical: '#EF4A55',
-  overcapacity: '#EF4A55'
+  safe: '#22A66F',
+  moderate: '#E4A93B',
+  high: '#F0864B',
+  critical: '#E15945',
+  overcapacity: '#E15945'
 }
 
 export default function CrowdMap({ zones, selectedZoneId, onSelect }) {
@@ -18,7 +18,7 @@ export default function CrowdMap({ zones, selectedZoneId, onSelect }) {
     <div id="map" className="panel p-4 lg:p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="font-display font-semibold text-[15px]">Live Crowd Map</h2>
+          <h2 className="font-display font-semibold text-[15px] text-ink">Live Crowd Map</h2>
           <p className="text-[12px] text-ink-faint mt-0.5">Tap a zone for the full breakdown</p>
         </div>
         <Legend />
@@ -32,10 +32,11 @@ export default function CrowdMap({ zones, selectedZoneId, onSelect }) {
         >
           <defs>
             <pattern id="grid" width="22" height="22" patternUnits="userSpaceOnUse">
-              <path d="M 22 0 L 0 0 0 22" fill="none" stroke="#132420" strokeWidth="1" />
+              <path d="M 22 0 L 0 0 0 22" fill="none" stroke="#21262D" strokeWidth="1" />
             </pattern>
           </defs>
-          <rect width={width} height={height} fill="url(#grid)" rx="14" />
+          <rect width={width} height={height} fill="#161B22" rx="10" />
+          <rect width={width} height={height} fill="url(#grid)" rx="10" />
 
           {zones.map((z) => {
             const isSelected = z.id === selectedZoneId
@@ -50,25 +51,25 @@ export default function CrowdMap({ zones, selectedZoneId, onSelect }) {
                 <rect
                   width={z.w}
                   height={z.h}
-                  rx="10"
+                  rx="6"
                   fill={fill}
-                  fillOpacity={isSelected ? 0.26 : 0.14}
+                  fillOpacity={isSelected ? 0.28 : 0.15}
                   stroke={fill}
-                  strokeOpacity={isSelected ? 0.9 : 0.45}
-                  strokeWidth={isSelected ? 2 : 1.2}
+                  strokeOpacity={isSelected ? 0.95 : 0.45}
+                  strokeWidth={isSelected ? 2 : 1}
                   className={z.risk === 'critical' || z.risk === 'overcapacity' ? 'critical-pulse' : ''}
                 />
-                <text x="10" y="20" fontSize="11.5" fontFamily="Space Grotesk" fontWeight="600" fill="#EAF4F0">
+                <text x="10" y="20" fontSize="11.5" fontFamily="Space Grotesk, sans-serif" fontWeight="600" fill="#E6EDF3">
                   {z.name.split('·')[0].trim()}
                 </text>
-                <text x="10" y="37" fontSize="10.5" fontFamily="Inter" fill="#9FB6AE">
+                <text x="10" y="37" fontSize="10.5" fontFamily="Inter, sans-serif" fill="#8B949E">
                   {z.name.includes('·') ? z.name.split('·')[1].trim() : ''}
                 </text>
                 <text
                   x="10"
                   y={z.h - 12}
                   fontSize="15"
-                  fontFamily="JetBrains Mono"
+                  fontFamily="JetBrains Mono, monospace"
                   fontWeight="600"
                   fill={fill}
                 >
@@ -78,8 +79,8 @@ export default function CrowdMap({ zones, selectedZoneId, onSelect }) {
                   x={z.w - 10}
                   y={z.h - 12}
                   fontSize="10"
-                  fontFamily="JetBrains Mono"
-                  fill="#9FB6AE"
+                  fontFamily="JetBrains Mono, monospace"
+                  fill="#8B949E"
                   textAnchor="end"
                 >
                   {z.count}/{z.capacity}
@@ -102,10 +103,10 @@ export default function CrowdMap({ zones, selectedZoneId, onSelect }) {
                 y1={y1}
                 x2={x2}
                 y2={y2}
-                stroke="#3FDBA6"
+                stroke="#58A6A6"
                 strokeWidth="1.6"
                 className="flow-line"
-                opacity="0.7"
+                opacity="0.8"
               />
             )
           })}

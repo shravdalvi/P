@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Activity, Mail, Lock, ShieldCheck, ArrowRight } from 'lucide-react'
+import { Activity, Mail, Lock, ShieldCheck, ArrowRight, Radio } from 'lucide-react'
 import { EVENT } from '../data/mockData.js'
 
 const ROLES = [
   { id: 'admin', label: 'Event Admin', email: 'admin@pulsecommand.io' },
-  { id: 'ops', label: 'Operations Team', email: 'ops@pulsecommand.io' },
-  { id: 'security', label: 'Security / Response', email: 'security@pulsecommand.io' }
+  { id: 'ops', label: 'Operations', email: 'ops@pulsecommand.io' },
+  { id: 'security', label: 'Security', email: 'security@pulsecommand.io' }
 ]
 
 export default function Login({ onLogin }) {
@@ -25,40 +25,41 @@ export default function Login({ onLogin }) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#FAF9F6] px-4 relative overflow-hidden">
-      <div className="absolute -top-40 -left-40 w-[440px] h-[440px] rounded-full bg-[#EAF7F3] blur-[120px]" />
-      <div className="absolute -bottom-32 -right-32 w-[440px] h-[440px] rounded-full bg-[#EAF0FF] blur-[120px]" />
-
-      <div className="relative w-full max-w-[980px] grid lg:grid-cols-[1.08fr_0.92fr] overflow-hidden rounded-[28px] border border-[#E7E6E1] bg-white shadow-panel">
-        <div className="hidden lg:flex flex-col justify-between p-9 bg-[#F5F7F4]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#0E3D34] text-white flex items-center justify-center">
-              <Activity size={18} strokeWidth={2.5} />
-            </div>
-            <div>
-              <p className="font-display text-[18px] text-ink">Pulse Command</p>
-              <p className="text-[11px] text-ink-faint">Mega-Event Crowd Orchestration</p>
-            </div>
+    <div className="min-h-screen flex items-center justify-center bg-surface-base px-4 py-8">
+      <div className="w-full max-w-[420px] bg-surface-panel border border-border-default rounded-[6px] p-6 sm:p-7 shadow-2xl">
+        {/* ── Brand Header ──────────────────────────────────────────────── */}
+        <div className="flex items-center gap-3 mb-5 pb-5 border-b border-border-muted">
+          <div className="w-10 h-10 rounded-[6px] bg-surface-raised border border-border-default flex items-center justify-center text-accent shrink-0">
+            <Activity size={20} strokeWidth={2.5} />
           </div>
-
-          <div>
-            <p className="font-display text-[30px] leading-tight text-ink">One control room for every gate, zone and route.</p>
-            <p className="text-[13px] text-ink-dim mt-3 max-w-[340px]">
-              Live occupancy, predictive risk and AI-drafted redistribution plans for {EVENT.name}.
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="font-display font-bold text-[15px] tracking-wider text-ink uppercase">
+                Pulse Command
+              </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block" />
+            </div>
+            <p className="text-[11px] font-mono tracking-wide text-ink-faint uppercase">
+              Operations Command Center
             </p>
-          </div>
-
-          <div className="flex items-center gap-2 text-[12px] text-ink-dim">
-            <ShieldCheck size={14} className="text-[#1E6D5B]" />
-            Role-based access · local simulation engine
           </div>
         </div>
 
-        <div className="bg-white p-8 sm:p-10">
-          <p className="text-[11px] uppercase tracking-[0.16em] text-ink-faint mb-2">Sign in</p>
-          <h1 className="font-display font-semibold text-[26px] text-ink mb-6">Welcome back</h1>
+        {/* ── Event Context Banner ───────────────────────────────────────── */}
+        <div className="mb-5 px-3 py-2 rounded-[4px] bg-surface-raised border border-border-muted flex items-center justify-between text-[11.5px]">
+          <div className="flex items-center gap-2 text-ink-dim truncate">
+            <Radio size={13} className="text-accent shrink-0 animate-pulse" />
+            <span className="truncate">{EVENT.name}</span>
+          </div>
+          <span className="text-ink-faint shrink-0 font-mono text-[10.5px]">LIVE SIM</span>
+        </div>
 
-          <div className="grid grid-cols-3 gap-1.5 mb-6 p-1 rounded-xl bg-[#F5F7F4] border border-[#E7E6E1]">
+        {/* ── Role Selector Tabs ─────────────────────────────────────────── */}
+        <div className="mb-5">
+          <label className="text-[11px] font-mono uppercase tracking-wider text-ink-faint block mb-2">
+            Operational Role
+          </label>
+          <div className="grid grid-cols-3 gap-1 p-1 rounded-[6px] bg-surface-raised border border-border-default">
             {ROLES.map((r) => (
               <button
                 key={r.id}
@@ -67,58 +68,69 @@ export default function Login({ onLogin }) {
                   setRoleId(r.id)
                   setEmail(r.email)
                 }}
-                className={`text-[11px] py-2 rounded-lg transition-colors ${
-                  roleId === r.id ? 'bg-[#0E3D34] text-white' : 'text-ink-dim hover:text-ink'
+                className={`text-[11.5px] py-1.5 rounded-[4px] font-medium transition-all ${
+                  roleId === r.id
+                    ? 'bg-accent text-surface-base font-semibold shadow-sm'
+                    : 'text-ink-dim hover:text-ink hover:bg-surface-panel/60'
                 }`}
               >
                 {r.label}
               </button>
             ))}
           </div>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Field icon={Mail} label="Email" type="email" value={email} onChange={setEmail} />
-            <Field
-              icon={Lock}
-              label="Password"
-              type="password"
-              value={password}
-              onChange={setPassword}
-              placeholder="Demo mode - any password"
-            />
+        {/* ── Login Form ────────────────────────────────────────────────── */}
+        <form onSubmit={handleSubmit} className="space-y-3.5">
+          <div>
+            <label className="text-[11px] font-mono uppercase tracking-wider text-ink-faint block mb-1">
+              Operator Identification
+            </label>
+            <div className="flex items-center gap-2.5 rounded-[6px] border border-border-default bg-surface-raised px-3 py-2 focus-within:border-accent transition-colors">
+              <Mail size={14} className="text-ink-faint shrink-0" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="bg-transparent outline-none text-[13px] text-ink w-full font-mono placeholder:text-ink-faint"
+                required
+              />
+            </div>
+          </div>
 
-            <button
-              type="submit"
-              className="w-full flex items-center justify-center gap-2 bg-[#0E3D34] hover:bg-[#114E42] text-white font-medium text-[14px] py-2.75 rounded-xl transition-colors mt-2"
-            >
-              Enter command center <ArrowRight size={15} />
-            </button>
-          </form>
+          <div>
+            <label className="text-[11px] font-mono uppercase tracking-wider text-ink-faint block mb-1">
+              Access Credential
+            </label>
+            <div className="flex items-center gap-2.5 rounded-[6px] border border-border-default bg-surface-raised px-3 py-2 focus-within:border-accent transition-colors">
+              <Lock size={14} className="text-ink-faint shrink-0" />
+              <input
+                type="password"
+                value={password}
+                placeholder="Demo mode — any password"
+                onChange={(e) => setPassword(e.target.value)}
+                className="bg-transparent outline-none text-[13px] text-ink w-full placeholder:text-ink-faint"
+              />
+            </div>
+          </div>
 
-          <p className="text-[11.5px] text-ink-faint mt-5">
-            Demo credentials are pre-filled per role. This build runs on the local simulation engine - no live Firebase project required.
-          </p>
+          <button
+            type="submit"
+            className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-surface-base font-semibold text-[13.5px] py-2.5 rounded-[6px] transition-colors mt-4"
+          >
+            Enter Command Center <ArrowRight size={15} />
+          </button>
+        </form>
+
+        {/* ── Security / Ingestion Footnote ─────────────────────────────── */}
+        <div className="mt-5 pt-4 border-t border-border-muted flex items-center justify-between text-[11px] text-ink-faint">
+          <div className="flex items-center gap-1.5">
+            <ShieldCheck size={13} className="text-status-safe" />
+            <span>Role-Gated Access</span>
+          </div>
+          <span className="font-mono">Local Engine v1.0</span>
         </div>
       </div>
     </div>
-  )
-}
-
-function Field({ icon: Icon, label, type, value, onChange, placeholder }) {
-  return (
-    <label className="block">
-      <span className="text-[11.5px] text-ink-dim mb-1.5 block">{label}</span>
-      <div className="flex items-center gap-2.5 rounded-xl border border-[#E7E6E1] bg-[#F9FAF8] px-3 py-2.5 focus-within:border-[#0E3D34]/30 transition-colors">
-        <Icon size={15} className="text-ink-faint shrink-0" />
-        <input
-          type={type}
-          value={value}
-          placeholder={placeholder}
-          onChange={(e) => onChange(e.target.value)}
-          className="bg-transparent outline-none text-[13.5px] text-ink w-full placeholder:text-ink-faint"
-          required={type === 'email'}
-        />
-      </div>
-    </label>
   )
 }

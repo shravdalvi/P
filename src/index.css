@@ -11,28 +11,28 @@ html, body, #root {
 }
 
 body {
-  @apply bg-base text-ink font-body antialiased;
-  background-color: #faf9f6;
-  color: #123047;
+  @apply bg-surface-base text-ink font-body antialiased;
+  background-color: #0F1419;
+  color: #E6EDF3;
 }
 
 ::selection {
-  background: rgba(30, 109, 91, 0.18);
+  background: rgba(88, 166, 166, 0.28);
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #0F1419;
 }
 ::-webkit-scrollbar-thumb {
-  background: #d9ddd8;
-  border-radius: 999px;
+  background: #30363D;
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #c8cbc5;
+  background: #484F58;
 }
 
 @layer utilities {
@@ -41,12 +41,29 @@ body {
   }
 
   .panel {
-    @apply bg-white border border-[#EEF1EE] rounded-2xl shadow-panel;
+    @apply bg-surface-panel border border-border-default rounded-[6px] shadow-none;
   }
 
   .status-dot {
     @apply inline-block w-2 h-2 rounded-full;
   }
+}
+
+/* ── Animation utilities ── */
+@keyframes criticalPulse {
+  0%, 100% { stroke-opacity: 0.8; fill-opacity: 0.25; }
+  50% { stroke-opacity: 1; fill-opacity: 0.45; }
+}
+.critical-pulse {
+  animation: criticalPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes flowDash {
+  to { stroke-dashoffset: -14; }
+}
+.flow-line {
+  stroke-dasharray: 4 3;
+  animation: flowDash 1.2s linear infinite;
 }
 
 .maplibregl-ctrl-group {

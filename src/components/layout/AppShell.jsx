@@ -9,7 +9,7 @@ export default function AppShell({ role, onLogout }) {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#FAF9F6]">
+    <div className="flex h-screen overflow-hidden bg-surface-base">
       <Sidebar role={role} onLogout={onLogout} />
 
       {mobileOpen && (
@@ -21,9 +21,9 @@ export default function AppShell({ role, onLogout }) {
         </div>
       )}
 
-      <div className="flex-1 flex flex-col min-w-0 bg-[#FAF9F6]">
+      <div className="flex-1 flex flex-col min-w-0 bg-surface-base">
         <Header alertCount={engine.kpis.activeAlerts} onMenuClick={() => setMobileOpen(true)} />
-        <main className="flex-1 overflow-y-auto bg-[#FAF9F6]">
+        <main className="flex-1 overflow-y-auto bg-surface-base">
           <Outlet context={engine} />
         </main>
       </div>
