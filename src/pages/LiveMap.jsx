@@ -35,20 +35,6 @@ const RISK_COLORS = {
 }
 
 // Fixed architectural polygon coordinates for all 12 zones forming the arena district
-const ZONE_COORDS = {
-  'zone-a': [[-0.008, 0.0065], [0.000, 0.0065], [0.000, 0.0035], [-0.008, 0.0035], [-0.008, 0.0065]],
-  'zone-b': [[0.001, 0.0065], [0.006, 0.0065], [0.006, 0.0025], [0.001, 0.0025], [0.001, 0.0065]],
-  'parking': [[0.007, 0.0065], [0.011, 0.0065], [0.011, 0.0025], [0.007, 0.0025], [0.007, 0.0065]],
-  'zone-d': [[-0.008, 0.0025], [-0.002, 0.0025], [-0.002, -0.0015], [-0.008, -0.0015], [-0.008, 0.0025]],
-  'zone-c': [[-0.001, 0.0020], [0.005, 0.0020], [0.005, -0.0015], [-0.001, -0.0015], [-0.001, 0.0020]],
-  'main-stage': [[0.006, 0.0020], [0.010, 0.0020], [0.010, -0.0015], [0.006, -0.0015], [0.006, 0.0020]],
-  'zone-e': [[-0.008, -0.0025], [-0.002, -0.0025], [-0.002, -0.0055], [-0.008, -0.0055], [-0.008, -0.0025]],
-  'zone-f': [[-0.001, -0.0025], [0.005, -0.0025], [0.005, -0.0055], [-0.001, -0.0055], [-0.001, -0.0025]],
-  'food-court': [[0.006, -0.0025], [0.010, -0.0025], [0.010, -0.0055], [0.006, -0.0055], [0.006, -0.0025]],
-  'gate-1': [[-0.008, -0.0065], [-0.002, -0.0065], [-0.002, -0.0085], [-0.008, -0.0085], [-0.008, -0.0065]],
-  'gate-2': [[-0.001, -0.0065], [0.005, -0.0065], [0.005, -0.0085], [-0.001, -0.0085], [-0.001, -0.0065]],
-  'exit': [[0.006, -0.0065], [0.010, -0.0065], [0.010, -0.0085], [0.006, -0.0085], [0.006, -0.0065]]
-}
 
 // Venue infrastructure lines & grounds
 const VENUE_INFRA = {
@@ -105,23 +91,21 @@ const GATES = [
 ]
 
 // IoT Gateways Mesh Coordinates
-const GATEWAYS = [
-  { id: 'GW-01', lng: -0.005, lat: 0.005 },
-  { id: 'GW-09', lng: 0.0035, lat: 0.0045 },
-  { id: 'GW-14', lng: 0.0085, lat: 0.0045 },
-  { id: 'GW-19', lng: -0.005, lat: 0.0005, status: 'offline' },
-  { id: 'GW-22', lng: 0.002, lat: 0.0002 },
-  { id: 'GW-27', lng: 0.008, lat: 0.0002 },
-  { id: 'GW-33', lng: -0.005, lat: -0.004, status: 'offline' },
-  { id: 'GW-38', lng: 0.002, lat: -0.004 },
-  { id: 'GW-41', lng: 0.008, lat: -0.004 }
-]
+
 
 function buildZonesGeoJSON(zones) {
   return {
     type: 'FeatureCollection',
     features: zones.map((z) => {
-      const baseCoords = ZONE_COORDS[z.id] || [[-0.002, 0.002], [0.002, 0.002], [0.002, -0.002], [-0.002, -0.002], [-0.002, 0.002]]
+      const hw = ((z.w || 90) / 2) / 22666;
+      const hh = ((z.h || 60) / 2) / 30000;
+      const baseCoords = [
+        [z.lng - hw, z.lat + hh],
+        [z.lng + hw, z.lat + hh],
+        [z.lng + hw, z.lat - hh],
+        [z.lng - hw, z.lat - hh],
+        [z.lng - hw, z.lat + hh]
+      ]
       const coords = applyOffset(baseCoords)
       const colorObj = RISK_COLORS[z.risk] || RISK_COLORS.safe
       return {
@@ -138,11 +122,33 @@ function buildZonesGeoJSON(zones) {
           pct: Math.round(z.ratio * 100),
           risk: z.risk,
           fillColor: colorObj.fill,
-          borderColor: colorObj.border
+          borderColor: colorObj.border,
+          lng: z.lng,
+          lat: z.lat
         },
         geometry: {
           type: 'Polygon',
           coordinates: [coords]
+        }
+      }
+    })
+  }
+}
+
+function buildZoneCentersGeoJSON(zones) {
+  return {
+    type: 'FeatureCollection',
+    features: zones.map((z) => {
+      const colorObj = RISK_COLORS[z.risk] || RISK_COLORS.safe
+      return {
+        type: 'Feature',
+        id: z.id + '-center',
+        properties: {
+          fillColor: colorObj.fill
+        },
+        geometry: {
+          type: 'Point',
+          coordinates: applyOffset([z.lng, z.lat])
         }
       }
     })
@@ -155,9 +161,9 @@ function buildFlowGeoJSON(zones) {
     if (z.netFlow > 2 && z.neighbors) {
       z.neighbors.forEach((nId) => {
         const neighbor = zones.find((item) => item.id === nId)
-        if (neighbor && neighbor.ratio < z.ratio && ZONE_COORDS[z.id] && ZONE_COORDS[neighbor.id]) {
-          const start = getCenter(applyOffset(ZONE_COORDS[z.id]))
-          const end = getCenter(applyOffset(ZONE_COORDS[neighbor.id]))
+        if (neighbor && neighbor.ratio < z.ratio && z.lng && neighbor.lng) {
+          const start = applyOffset([z.lng, z.lat])
+          const end = applyOffset([neighbor.lng, neighbor.lat])
           features.push({
             type: 'Feature',
             properties: {
@@ -185,6 +191,38 @@ function getCenter(polygon) {
 // COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
+
+function getDynamicPerimeter(zones) {
+  if (!zones || zones.length === 0) {
+    return [[[-0.0105, 0.0085], [0.0125, 0.0085], [0.0125, -0.0100], [-0.0105, -0.0100], [-0.0105, 0.0085]]];
+  }
+  let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+  zones.forEach(z => {
+    const hw = ((z.w || 90) / 2) / 22666;
+    const hh = ((z.h || 60) / 2) / 30000;
+    const pts = [
+      [z.lng - hw, z.lat + hh],
+      [z.lng + hw, z.lat + hh],
+      [z.lng + hw, z.lat - hh],
+      [z.lng - hw, z.lat - hh]
+    ];
+    pts.forEach(p => {
+      if (p[0] < minLng) minLng = p[0];
+      if (p[0] > maxLng) maxLng = p[0];
+      if (p[1] < minLat) minLat = p[1];
+      if (p[1] > maxLat) maxLat = p[1];
+    });
+  });
+  const pLng = 0.002, pLat = 0.002;
+  return [[
+    [minLng - pLng, maxLat + pLat],
+    [maxLng + pLng, maxLat + pLat],
+    [maxLng + pLng, minLat - pLat],
+    [minLng - pLng, minLat - pLat],
+    [minLng - pLng, maxLat + pLat]
+  ]];
+}
+
 export default function LiveMapPage() {
   const engine = useOutletContext()
   const navigate = useNavigate()
@@ -196,8 +234,7 @@ export default function LiveMapPage() {
 
   const [mapReady, setMapReady] = useState(false)
   const [showFlow, setShowFlow] = useState(true)
-  const [showDevices, setShowDevices] = useState(true)
-  const [showGates, setShowGates] = useState(true)
+    const [showGates, setShowGates] = useState(true)
   const [showTeams, setShowTeams] = useState(true)
 
   // Safe fallback if engine is not provided
@@ -290,6 +327,20 @@ export default function LiveMapPage() {
       // 2. Zones Source & Layers
       const initialZonesGeo = buildZonesGeoJSON(zones)
       map.addSource('zones', { type: 'geojson', data: initialZonesGeo, promoteId: 'id' })
+      const initialCentersGeo = buildZoneCentersGeoJSON(zones)
+      map.addSource('zone-centers', { type: 'geojson', data: initialCentersGeo })
+
+      map.addLayer({
+        id: 'zone-center-dot',
+        type: 'circle',
+        source: 'zone-centers',
+        paint: {
+          'circle-radius': 4,
+          'circle-color': ['get', 'fillColor'],
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#000000'
+        }
+      })
 
       map.addLayer({
         id: 'zone-fill',
@@ -403,27 +454,6 @@ export default function LiveMapPage() {
         markersRef.current.push({ el, marker: m, type: 'gate' })
       })
 
-      // Render IoT Gateway Markers
-      GATEWAYS.forEach((gw) => {
-        const el = document.createElement('div')
-        el.className = 'device-dot'
-        el.setAttribute('data-layer', 'device')
-        if (gw.status === 'offline') {
-          el.style.background = '#E15945'
-          el.style.boxShadow = '0 0 0 2px rgba(225, 89, 69, 0.4)'
-        } else {
-          el.style.background = '#58A6A6'
-          el.style.boxShadow = '0 0 0 2px rgba(88, 166, 166, 0.3)'
-        }
-        el.title = `${gw.id} (${gw.status || 'online'})`
-
-        const m = new maplibregl.Marker({ element: el, anchor: 'center' })
-          .setLngLat([gw.lng + MAP_OFFSET[0], gw.lat + MAP_OFFSET[1]])
-          .addTo(map)
-
-        markersRef.current.push({ el, marker: m, type: 'device' })
-      })
-
       setMapReady(true)
     })
 
@@ -446,6 +476,26 @@ export default function LiveMapPage() {
 
     try {
       map.getSource('zones')?.setData(buildZonesGeoJSON(zones))
+      map.getSource('zone-centers')?.setData(buildZoneCentersGeoJSON(zones))
+      map.getSource('flow')?.setData(buildFlowGeoJSON(zones))
+
+      const dynamicPerimeterCoords = getDynamicPerimeter(zones)
+      const offsetVenueInfra = {
+        ...VENUE_INFRA,
+        features: VENUE_INFRA.features.map(f => {
+          if (f.properties.kind === 'perimeter') {
+            return {
+              ...f,
+              geometry: { ...f.geometry, coordinates: applyOffset(dynamicPerimeterCoords) }
+            }
+          }
+          return {
+            ...f,
+            geometry: { ...f.geometry, coordinates: applyOffset(f.geometry.coordinates) }
+          }
+        })
+      }
+      map.getSource('venue-infra')?.setData(offsetVenueInfra)
       map.getSource('flow')?.setData(buildFlowGeoJSON(zones))
     } catch (_) {}
   }, [zones, mapReady])
@@ -472,9 +522,8 @@ export default function LiveMapPage() {
   useEffect(() => {
     markersRef.current.forEach(({ el, type }) => {
       if (type === 'gate') el.style.display = showGates ? 'flex' : 'none'
-      if (type === 'device') el.style.display = showDevices ? 'block' : 'none'
-    })
-  }, [showGates, showDevices])
+          })
+  }, [showGates])
 
   // ── Map Controls ───────────────────────────────────────────────────────────
   const zoomIn = () => mapRef.current?.zoomIn({ duration: 200 })
@@ -563,16 +612,7 @@ export default function LiveMapPage() {
                 <MapPin size={12} /> Gates
               </button>
 
-              <button
-                onClick={() => setShowDevices((v) => !v)}
-                className={`inline-flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1 text-[11px] font-mono transition-colors ${
-                  showDevices
-                    ? 'border-accent bg-accent/15 text-accent font-semibold'
-                    : 'border-border-default bg-surface-panel text-ink-dim hover:text-ink'
-                }`}
-              >
-                <Radio size={12} /> Sensors
-              </button>
+              
             </div>
           </div>
 

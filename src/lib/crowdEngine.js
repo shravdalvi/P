@@ -54,17 +54,49 @@ export function predictZone(zone) {
   return { projections, breachIn }
 }
 
+const ZONE_COORDS = {
+  'zone-a': [[-0.008, 0.0065], [0.000, 0.0065], [0.000, 0.0035], [-0.008, 0.0035], [-0.008, 0.0065]],
+  'zone-b': [[0.001, 0.0065], [0.006, 0.0065], [0.006, 0.0025], [0.001, 0.0025], [0.001, 0.0065]],
+  'parking': [[0.007, 0.0065], [0.011, 0.0065], [0.011, 0.0025], [0.007, 0.0025], [0.007, 0.0065]],
+  'zone-d': [[-0.008, 0.0025], [-0.002, 0.0025], [-0.002, -0.0015], [-0.008, -0.0015], [-0.008, 0.0025]],
+  'zone-c': [[-0.001, 0.0020], [0.005, 0.0020], [0.005, -0.0015], [-0.001, -0.0015], [-0.001, 0.0020]],
+  'main-stage': [[0.006, 0.0020], [0.010, 0.0020], [0.010, -0.0015], [0.006, -0.0015], [0.006, 0.0020]],
+  'zone-e': [[-0.008, -0.0025], [-0.002, -0.0025], [-0.002, -0.0055], [-0.008, -0.0055], [-0.008, -0.0025]],
+  'zone-f': [[-0.001, -0.0025], [0.005, -0.0025], [0.005, -0.0055], [-0.001, -0.0055], [-0.001, -0.0025]],
+  'food-court': [[0.006, -0.0025], [0.010, -0.0025], [0.010, -0.0055], [0.006, -0.0055], [0.006, -0.0025]],
+  'gate-1': [[-0.008, -0.0065], [-0.002, -0.0065], [-0.002, -0.0085], [-0.008, -0.0085], [-0.008, -0.0065]],
+  'gate-2': [[-0.001, -0.0065], [0.005, -0.0065], [0.005, -0.0085], [-0.001, -0.0085], [-0.001, -0.0065]],
+  'exit': [[0.006, -0.0065], [0.010, -0.0065], [0.010, -0.0085], [0.006, -0.0085], [0.006, -0.0065]]
+}
+
+function getCentroid(coords) {
+  let cx = 0, cy = 0;
+  for (let i = 0; i < coords.length - 1; i++) {
+    cx += coords[i][0];
+    cy += coords[i][1];
+  }
+  return [cx / (coords.length - 1), cy / (coords.length - 1)];
+}
+
 function seedZones() {
   return ZONES.map((z) => {
     const ratio = INITIAL_OCCUPANCY[z.id] ?? 0.4
     const count = Math.round(z.capacity * ratio)
+    // Compute perfect canonical lng/lat from mock layout
+    const cx = z.x + (z.w / 2)
+    const cy = z.y + (z.h / 2)
+    const lng = -0.004 + (cx - 115) / 22666
+    const lat = 0.0050 - (cy - 85) / 30000
+    const { x, y, ...rest } = z;
     return {
-      ...z,
+      ...rest,
       count,
-      incoming: Math.round(2 + Math.random() * 6),
-      outgoing: Math.round(1 + Math.random() * 4),
-      netFlow: 0,
-      dwell: Math.round(8 + Math.random() * 20)
+      dwell: Math.round(8 + Math.random() * 20),
+      incoming: Math.round(count * 0.015),
+      outgoing: Math.round(count * 0.012),
+      netFlow: Math.round(count * 0.003),
+      lng,
+      lat
     }
   })
 }
@@ -285,20 +317,101 @@ export function useCrowdEngine() {
     setRunning(true)
   }, [])
 
+
+  const getFreeLocation = (w = 90, h = 60, currentZones) => {
+    let clng = 0.002;
+    let clat = 0.002;
+
+    let radius = 0;
+    let angle = 0;
+
+    const checkOverlap = (lng, lat) => {
+      const hw1 = (w / 2) / 22666;
+      const hh1 = (h / 2) / 30000;
+      const marginLng = 0.0003;
+      const marginLat = 0.0003;
+
+      return currentZones.some(z => {
+        const hw2 = (z.w / 2) / 22666;
+        const hh2 = (z.h / 2) / 30000;
+        return (
+          lng - hw1 < z.lng + hw2 + marginLng &&
+          lng + hw1 > z.lng - hw2 - marginLng &&
+          lat - hh1 < z.lat + hh2 + marginLat &&
+          lat + hh1 > z.lat - hh2 - marginLat
+        );
+      });
+    }
+
+    while (checkOverlap(clng, clat)) {
+      angle += Math.PI / 4;
+      radius += 0.0002;
+      clng = 0.002 + Math.cos(angle) * radius;
+      clat = 0.002 + Math.sin(angle) * radius;
+      if (radius > 0.02) break;
+    }
+    return { lng: clng, lat: clat };
+  }
+
+  const updateZone = useCallback((id, updates) => {
+    setZones((prev) => {
+      if (updates.lng !== undefined && updates.lat !== undefined) {
+        const targetZone = prev.find(z => z.id === id);
+        if (targetZone) {
+          const hw1 = (targetZone.w / 2) / 22666;
+          const hh1 = (targetZone.h / 2) / 30000;
+          const marginLng = 0.0003;
+          const marginLat = 0.0003;
+
+          const isOverlap = prev.some(z => {
+            if (z.id === id) return false;
+            const hw2 = (z.w / 2) / 22666;
+            const hh2 = (z.h / 2) / 30000;
+            return (
+              updates.lng - hw1 < z.lng + hw2 + marginLng &&
+              updates.lng + hw1 > z.lng - hw2 - marginLng &&
+              updates.lat - hh1 < z.lat + hh2 + marginLat &&
+              updates.lat + hh1 > z.lat - hh2 - marginLat
+            );
+          });
+
+          if (isOverlap) {
+            const safeUpdates = { ...updates };
+            delete safeUpdates.lng;
+            delete safeUpdates.lat;
+            updates = safeUpdates;
+          }
+        }
+      }
+      return prev.map(z => z.id === id ? { ...z, ...updates } : z);
+    })
+  }, [])
+
+  const removeZone = useCallback((id) => {
+    setZones((prev) => prev.filter(z => z.id !== id))
+  }, [])
+
   const addZone = useCallback((name, capacity) => {
     const id = `zone-${Math.random().toString(36).substr(2, 6)}`
-    const newZone = {
-      id,
-      name,
-      capacity: parseInt(capacity, 10) || 1000,
-      count: 0,
-      incoming: 2,
-      outgoing: 1,
-      netFlow: 1,
-      x: 10, y: 10, w: 30, h: 30, neighbors: []
-    }
-    setZones((prev) => [...prev, newZone])
-    pushLog(`Added new zone: ${name} (Capacity: ${newZone.capacity}).`)
+
+    setZones((prev) => {
+      const { lng, lat } = getFreeLocation(90, 60, prev);
+      const newZone = {
+        id,
+        name,
+        capacity: parseInt(capacity, 10) || 1000,
+        count: 0,
+        incoming: 0,
+        outgoing: 0,
+        netFlow: 0,
+        w: 90, h: 60, neighbors: [],
+        lng,
+        lat
+      }
+      return [...prev, newZone]
+    })
+
+    pushLog(`Added new zone: ${name} (Capacity: ${capacity}).`)
   }, [pushLog])
 
   const network = useMemo(
@@ -332,6 +445,8 @@ export function useCrowdEngine() {
     setDemoScenario,
     resetSimulation,
     addZone,
+    updateZone,
+    removeZone,
     acknowledgeAlert,
     resolveAlert,
     approveRecommendation,

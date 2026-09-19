@@ -9,8 +9,8 @@ const RISK_FILL = {
 }
 
 export default function CrowdMap({ zones, selectedZoneId, onSelect }) {
-  const width = 570
-  const height = 460
+    const width = Math.max(570, ...zones.map(z => 115 + (z.lng - (-0.004)) * 22666 + (z.w / 2) + 20))
+  const height = Math.max(460, ...zones.map(z => 85 + (0.0050 - z.lat) * 30000 + (z.h / 2) + 20))
 
   const flows = zones.filter((z) => z.netFlow > 3 && z.risk !== 'safe')
 
@@ -27,25 +27,25 @@ export default function CrowdMap({ zones, selectedZoneId, onSelect }) {
       <div className="overflow-x-auto">
         <svg
           viewBox={`0 0 ${width} ${height}`}
-          className="w-full min-w-[520px]"
-          style={{ maxHeight: 460 }}
+          className="w-full h-auto"
+          style={{ height: "auto" }}
         >
           <defs>
             <pattern id="grid" width="22" height="22" patternUnits="userSpaceOnUse">
               <path d="M 22 0 L 0 0 0 22" fill="none" stroke="#21262D" strokeWidth="1" />
             </pattern>
           </defs>
-          <rect width={width} height={height} fill="#161B22" rx="10" />
-          <rect width={width} height={height} fill="url(#grid)" rx="10" />
+          <rect width="100%" height="100%" fill="#161B22" rx="10" />
+          <rect width="100%" height="100%" fill="url(#grid)" rx="10" />
 
           {/* DIRECTIONAL WAVES / FLOWS (rendered beneath zones) */}
           {flows.map((z) => {
             const target = zones.find((n) => n.neighbors?.includes(z.id) && n.ratio < z.ratio)
             if (!target) return null
-            const x1 = z.x + z.w / 2
-            const y1 = z.y + z.h / 2
-            const x2 = target.x + target.w / 2
-            const y2 = target.y + target.h / 2
+            const x1 = 115 + (z.lng - (-0.004)) * 22666
+            const y1 = 85 + (0.0050 - z.lat) * 30000
+            const x2 = 115 + (target.lng - (-0.004)) * 22666
+            const y2 = 85 + (0.0050 - target.lat) * 30000
 
             // Subtle bezier curve for flow
             const dx = x2 - x1
@@ -68,13 +68,15 @@ export default function CrowdMap({ zones, selectedZoneId, onSelect }) {
           })}
 
           {zones.map((z) => {
+            const zx = 115 + (z.lng - (-0.004)) * 22666 - (z.w / 2)
+            const zy = 85 + (0.0050 - z.lat) * 30000 - (z.h / 2)
             const isSelected = z.id === selectedZoneId
             const fill = RISK_FILL[z.risk] ?? RISK_FILL.safe
 
             return (
               <g
                 key={z.id}
-                transform={`translate(${z.x}, ${z.y})`}
+                transform={`translate(${zx}, ${zy})`}
                 onClick={() => onSelect(z.id)}
                 className="cursor-pointer"
               >
@@ -91,6 +93,8 @@ export default function CrowdMap({ zones, selectedZoneId, onSelect }) {
                   className={z.risk === 'critical' || z.risk === 'overcapacity' ? 'critical-pulse' : ''}
                 />
 
+                {/* Core / Center Dot */}
+                <circle cx={z.w / 2} cy={z.h / 2} r="4" fill={fill} stroke="#000" strokeWidth="2" />
                 {/* Subtle Real-Time Heat/Pressure Visualization */}
                 {z.ratio > 0.05 && (
                   <g className="pointer-events-none transition-all duration-700 ease-out">
