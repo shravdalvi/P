@@ -223,7 +223,7 @@ function getDynamicPerimeter(zones) {
   ]];
 }
 
-export default function LiveMapPage() {
+export default function LiveMapPage({ isDashboardMode = false }) {
   const engine = useOutletContext()
   const navigate = useNavigate()
 
@@ -254,7 +254,7 @@ export default function LiveMapPage() {
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+      style: isDashboardMode ? 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json' : 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
       center: MAP_CENTER,
       zoom: MAP_ZOOM,
       attributionControl: false,
@@ -542,9 +542,9 @@ export default function LiveMapPage() {
   const assignedTeam = (engine?.teams || []).find((t) => t.zone === selectedZone?.name || t.zone === selectedZoneId)
 
   return (
-    <div className="p-4 lg:p-6 space-y-4 max-w-[1600px] mx-auto min-h-full flex flex-col">
-      {/* ── Header Strip ────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div className={isDashboardMode ? "flex flex-col w-full h-full" : "p-4 lg:p-6 space-y-4 max-w-[1600px] mx-auto min-h-full flex flex-col"}>
+      {!isDashboardMode && (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="font-display font-bold text-xl text-ink">Venue Digital Twin</h1>
@@ -577,11 +577,12 @@ export default function LiveMapPage() {
           </div>
         </div>
       </div>
+      )}
 
       {/* ── Main Map + Detail Split ─────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 flex-1 min-h-[640px]">
+      <div className={isDashboardMode ? "flex flex-col flex-1 h-full" : "grid grid-cols-1 xl:grid-cols-12 gap-4 flex-1 min-h-[640px]"}>
         {/* Map Column (8 cols ~67%) */}
-        <div className="xl:col-span-8 bg-surface-panel border border-border-default rounded-[6px] flex flex-col overflow-hidden relative">
+        <div className={isDashboardMode ? "w-full bg-surface-panel border border-border-default rounded-[6px] flex flex-col overflow-hidden relative flex-1 min-h-[400px]" : "xl:col-span-8 bg-surface-panel border border-border-default rounded-[6px] flex flex-col overflow-hidden relative"}>
           {/* Map Layer Toolbar */}
           <div className="px-4 py-2.5 border-b border-border-default flex flex-wrap items-center justify-between gap-2 bg-surface-raised">
             <div className="flex items-center gap-2 text-[12px] font-mono text-ink-dim">
@@ -673,7 +674,7 @@ export default function LiveMapPage() {
           </div>
         </div>
 
-        {/* Sidebar Zone Detail Column (4 cols ~33%) */}
+        {!isDashboardMode && (
         <div className="xl:col-span-4 flex flex-col gap-4">
           <div className="bg-surface-panel border border-border-default rounded-[6px] p-5 flex-1 flex flex-col">
             <div className="flex items-center justify-between pb-3.5 border-b border-border-default mb-4">
@@ -832,6 +833,7 @@ export default function LiveMapPage() {
             )}
           </div>
         </div>
+      )}
       </div>
     </div>
   )

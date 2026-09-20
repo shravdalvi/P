@@ -267,6 +267,12 @@ export function useCrowdEngine() {
     setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, status: 'resolved' } : a)))
   }, [])
 
+  const updateRecommendation = useCallback((id, newSteps) => {
+    setRecommendations((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, steps: newSteps } : r))
+    )
+  }, [])
+
   const approveRecommendation = useCallback(
     (id) => {
       setRecommendations((prev) => {
@@ -449,6 +455,7 @@ export function useCrowdEngine() {
     removeZone,
     acknowledgeAlert,
     resolveAlert,
+    updateRecommendation,
     approveRecommendation,
     dismissRecommendation
   }

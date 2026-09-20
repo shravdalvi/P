@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 
 const NAV = [
-  { to: '/dashboard', label: 'Command', icon: LayoutDashboard },
+  { to: '/dashboard', label: 'Home', icon: LayoutDashboard },
   { to: '/live-map', label: 'Live Map', icon: Map },
   { to: '/zones', label: 'Zones', icon: LayoutGrid },
   { to: '/alerts', label: 'Alerts', icon: ShieldAlert },
