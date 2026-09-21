@@ -2,3 +2,7 @@ node_modules/
 dist/
 .env
 .DS_Store
+backend/venv/
+backend/**/__pycache__/
+backend/.pytest_cache/
+*.pyc

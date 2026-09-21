@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { backendAdapter } from './backendAdapter.js'
 import {
   ZONES,
   INITIAL_OCCUPANCY,
@@ -119,6 +120,23 @@ export function useCrowdEngine() {
   const [teams, setTeams] = useState(RESPONSE_TEAMS)
   const [selectedZoneId, setSelectedZoneId] = useState(null)
   const [tick, setTick] = useState(0)
+  useEffect(() => {
+    backendAdapter.connect();
+
+    // Example seam: listen to backend realtime events
+    const unsubscribe = backendAdapter.subscribe('zone.updated', (event) => {
+      // In a fully deployed architecture, this would apply updates to local state
+      // e.g. setZones(prev => merge(prev, event.data))
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (running && zones.length > 0) {
+      backendAdapter.ingestSimulatorData(zones);
+    }
+  }, [zones, running]);
+
 
   const seenAlertZones = useRef(new Set())
   const seenRecZones = useRef(new Set())
