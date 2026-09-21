@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useOutletContext } from 'react-router-dom'
+import { useBackendSync } from '../hooks/useBackendSync.js'
 import LiveMapPage from './LiveMap.jsx'
 import PredictionPanel from '../components/dashboard/PredictionPanel.jsx'
 import RecommendationPanel from '../components/dashboard/RecommendationPanel.jsx'
@@ -17,7 +18,8 @@ import {
 } from 'lucide-react'
 
 export default function Dashboard() {
-  const engine = useOutletContext()
+  const baseEngine = useOutletContext()
+  const engine = useBackendSync(baseEngine)
 
   const focusZone = useMemo(() => {
     if (!engine?.zones || engine.zones.length === 0) return null
@@ -173,19 +175,19 @@ export default function Dashboard() {
                     {z.name.split('·')[0].trim()}
                   </span>
                   <span className={`text-[10px] font-mono font-bold uppercase ${isHighRisk ? 'text-status-critical' : 'text-status-safe'}`}>
-                    {Math.round(z.ratio * 100)}%
+                    {Math.round((z.occupancyPercentage ?? z.ratio) * 100)}%
                   </span>
                 </div>
 
                 <div className="w-full h-1.5 rounded-full bg-surface-overlay overflow-hidden mb-2.5">
                   <div
                     className={`h-full rounded-full ${isHighRisk ? 'bg-status-critical' : z.risk === 'moderate' ? 'bg-status-moderate' : 'bg-status-safe'}`}
-                    style={{ width: `${Math.min(100, z.ratio * 100)}%` }}
+                    style={{ width: `${Math.min(100, (z.occupancyPercentage ?? z.ratio) * 100)}%` }}
                   />
                 </div>
 
                 <div className="flex items-center justify-between text-[10.5px] font-data text-ink-dim w-full mt-auto">
-                  <span>{z.count.toLocaleString()}</span>
+                  <span>{(z.occupancy ?? z.count).toLocaleString()}</span>
                   <span className="text-ink-faint">/ {z.capacity.toLocaleString()}</span>
                 </div>
 
@@ -202,7 +204,7 @@ export default function Dashboard() {
       </div>
 
       {/* ── AI / OPERATIONAL INTELLIGENCE ─────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start pb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch pb-6 min-h-[380px]">
         {/* LEFT: CROWD PREDICTION ENGINE */}
         <div className="flex flex-col h-full">
           <PredictionPanel

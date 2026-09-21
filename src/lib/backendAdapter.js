@@ -10,6 +10,23 @@ const BACKEND_HTTP_URL = import.meta.env.VITE_BACKEND_HTTP_URL || 'http://localh
 const BACKEND_WS_URL = import.meta.env.VITE_BACKEND_WS_URL || 'ws://localhost:8000/ws';
 
 class BackendAdapter {
+  isConnected() {
+    return this.ws && this.ws.readyState === WebSocket.OPEN;
+  }
+
+  async getInitialZones() {
+    try {
+      const response = await fetch(`${BACKEND_HTTP_URL}/api/zones`);
+      if (response.ok) {
+        const data = await response.json();
+        return data; // { zones: [], timestamp: "..." }
+      }
+    } catch (err) {
+      console.warn('[BackendAdapter] Failed to fetch initial state');
+    }
+    return null;
+  }
+
   constructor() {
     this.ws = null;
     this.reconnectAttempts = 0;

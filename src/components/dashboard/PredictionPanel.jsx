@@ -4,7 +4,7 @@ import { RISK_STYLES } from '../../lib/statusStyles.js'
 
 export default function PredictionPanel({ zones, onSelect }) {
   const focusZone = useMemo(() => {
-    return [...zones].sort((a, b) => b.ratio - a.ratio)[0]
+    return [...zones].sort((a, b) => (b.occupancyPercentage ?? b.ratio) - (a.occupancyPercentage ?? a.ratio))[0]
   }, [zones])
 
   if (!focusZone) return null
@@ -12,7 +12,7 @@ export default function PredictionPanel({ zones, onSelect }) {
   const maxProjected = Math.max(...focusZone.prediction.projections.map((p) => p.value), focusZone.capacity)
 
   return (
-    <div id="predictions" className="panel p-4 lg:p-5">
+    <div id="predictions" className="panel p-4 lg:p-5 h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Gauge size={16} className="text-brand-400" />
@@ -31,13 +31,13 @@ export default function PredictionPanel({ zones, onSelect }) {
       </p>
 
       <div className="grid grid-cols-3 gap-3 mb-4">
-        <Stat label="Current" value={`${focusZone.count.toLocaleString()}`} sub={`/ ${focusZone.capacity.toLocaleString()}`} />
+        <Stat label="Current" value={`${(focusZone.occupancy ?? focusZone.count).toLocaleString()}`} sub={`/ ${focusZone.capacity.toLocaleString()}`} />
         <Stat
           label="Net flow"
           value={`${focusZone.netFlow >= 0 ? '+' : ''}${focusZone.netFlow}`}
           sub="people/min"
         />
-        <Stat label="Occupancy" value={`${Math.round(focusZone.ratio * 100)}%`} tone={style.text} />
+        <Stat label="Occupancy" value={`${Math.round((focusZone.occupancyPercentage ?? focusZone.ratio) * 100)}%`} tone={style.text} />
       </div>
 
       <div className="space-y-2 mb-4">

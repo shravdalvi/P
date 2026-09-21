@@ -15,7 +15,11 @@ async def get_event():
 
 @router.get("/api/zones")
 async def get_zones():
-    return list(state_manager.zones.values())
+    from datetime import datetime, timezone
+    return {
+        "zones": list(state_manager.zones.values()),
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
 
 @router.get("/api/issues")
 async def get_issues():
