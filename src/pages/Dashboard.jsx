@@ -1,8 +1,10 @@
 import { useMemo } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { useBackendSync } from '../hooks/useBackendSync.js'
 import LiveMapPage from './LiveMap.jsx'
 import PredictionPanel from '../components/dashboard/PredictionPanel.jsx'
+import ActionHistory from '../components/dashboard/ActionHistory.jsx'
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts'
+
 import RecommendationPanel from '../components/dashboard/RecommendationPanel.jsx'
 import ZoneDetailDrawer from '../components/dashboard/ZoneDetailDrawer.jsx'
 import {
@@ -18,8 +20,7 @@ import {
 } from 'lucide-react'
 
 export default function Dashboard() {
-  const baseEngine = useOutletContext()
-  const engine = useBackendSync(baseEngine)
+  const engine = useOutletContext()
 
   const focusZone = useMemo(() => {
     if (!engine?.zones || engine.zones.length === 0) return null
@@ -61,7 +62,7 @@ export default function Dashboard() {
                 Total Crowd
               </span>
               <span className="font-data text-3xl font-bold text-ink leading-none">
-                {engine?.kpis?.totalVisitors?.toLocaleString() ?? 0}
+                {engine?.kpis?.totalCrowd?.toLocaleString() ?? 0}
               </span>
             </div>
             <Users size={32} className="text-accent opacity-20" />
@@ -165,23 +166,27 @@ export default function Dashboard() {
                 key={z.id}
                 onClick={() => engine?.setSelectedZoneId(z.id)}
                 className={`flex flex-col text-left p-3 rounded-[6px] border transition-all ${
-                  isHighRisk
-                    ? 'bg-status-critical/5 border-status-critical/30 hover:border-status-critical/60'
-                    : 'bg-surface-panel border-border-default hover:border-border-muted hover:bg-surface-raised'
+                  z.status === 'OFF-LIMIT'
+                    ? 'bg-status-critical/10 border-status-critical text-status-critical hover:border-status-critical/80'
+                    : isHighRisk
+                      ? 'bg-status-critical/5 border-status-critical/30 hover:border-status-critical/60'
+                      : 'bg-surface-panel border-border-default hover:border-border-muted hover:bg-surface-raised'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2 w-full">
                   <span className="font-semibold text-[12px] text-ink truncate pr-2">
                     {z.name.split('·')[0].trim()}
                   </span>
-                  <span className={`text-[10px] font-mono font-bold uppercase ${isHighRisk ? 'text-status-critical' : 'text-status-safe'}`}>
-                    {Math.round((z.occupancyPercentage ?? z.ratio) * 100)}%
-                  </span>
+                  <div className="flex flex-col items-end">
+                    <span className={`text-[10px] font-mono font-bold uppercase ${z.status === 'OFF-LIMIT' ? 'text-status-critical' : isHighRisk ? 'text-status-critical' : 'text-status-safe'}`}>
+                      {z.status === 'OFF-LIMIT' ? 'OFF-LIMIT' : Math.round((z.occupancyPercentage ?? z.ratio) * 100) + '%'}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="w-full h-1.5 rounded-full bg-surface-overlay overflow-hidden mb-2.5">
                   <div
-                    className={`h-full rounded-full ${isHighRisk ? 'bg-status-critical' : z.risk === 'moderate' ? 'bg-status-moderate' : 'bg-status-safe'}`}
+                    className={`h-full rounded-full ${z.status === 'OFF-LIMIT' ? 'bg-status-critical' : isHighRisk ? 'bg-status-critical' : z.risk === 'moderate' ? 'bg-status-moderate' : 'bg-status-safe'}`}
                     style={{ width: `${Math.min(100, (z.occupancyPercentage ?? z.ratio) * 100)}%` }}
                   />
                 </div>
@@ -208,7 +213,7 @@ export default function Dashboard() {
         {/* LEFT: CROWD PREDICTION ENGINE */}
         <div className="flex flex-col h-full">
           <PredictionPanel
-            zones={engine?.zones || []}
+            aiPrediction={engine?.aiPrediction}
             onSelect={engine?.setSelectedZoneId}
           />
         </div>
@@ -217,10 +222,61 @@ export default function Dashboard() {
         <div className="flex flex-col h-full">
           <RecommendationPanel
             recommendations={engine?.recommendations || []}
+            contingencyTarget={engine?.contingencyTarget}
+            zones={engine?.zones || []}
             onApprove={engine?.approveRecommendation}
             onDismiss={engine?.dismissRecommendation}
             onUpdate={engine?.updateRecommendation}
+
+
           />
+        </div>
+      </div>
+
+
+      {/* ── ACTION HISTORY & ANALYTICS ──────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch pb-6">
+        <div className="col-span-1">
+           <ActionHistory history={engine?.actionHistory || []} zones={engine?.zones || []} />
+        </div>
+        <div className="col-span-2 flex flex-col gap-4">
+           {/* Chart Row */}
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-[240px]">
+              <div className="bg-surface-panel rounded-[6px] border border-border-default shadow-sm p-4 flex flex-col">
+                 <span className="text-[11px] font-mono uppercase tracking-widest text-ink-dim mb-4">Entrance / Exit Flow Rates</span>
+                 <div className="flex-1 w-full h-full min-h-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={engine?.flowHistory || []} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                        <XAxis dataKey="time" stroke="#94A3B8" fontSize={10} tickLine={false} axisLine={false} />
+                        <YAxis stroke="#94A3B8" fontSize={10} tickLine={false} axisLine={false} />
+                        <Tooltip contentStyle={{ backgroundColor: '#FFFFFF', borderColor: '#E2E8F0', fontSize: '12px' }} />
+                        <Area type="monotone" dataKey="in" stroke="#0D9488" fill="#CCFBF1" fillOpacity={0.5} strokeWidth={2} />
+                        <Area type="monotone" dataKey="out" stroke="#F97316" fill="#FFEDD5" fillOpacity={0.5} strokeWidth={2} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                 </div>
+              </div>
+
+              <div className="bg-surface-panel rounded-[6px] border border-border-default shadow-sm p-4 flex flex-col">
+                 <span className="text-[11px] font-mono uppercase tracking-widest text-ink-dim mb-4">Capacity Pressure Distribution</span>
+                 <div className="flex-1 w-full h-full min-h-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={(engine?.zones || []).slice(0, 6).map(z => ({ name: z.name.split('·')[0].trim(), ratio: (z.occupancyPercentage ?? z.ratio) * 100 }))} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                        <XAxis dataKey="name" stroke="#94A3B8" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(val) => val.replace('Zone ', 'Z')} />
+                        <YAxis stroke="#94A3B8" fontSize={10} tickLine={false} axisLine={false} />
+                        <Tooltip contentStyle={{ backgroundColor: '#FFFFFF', borderColor: '#E2E8F0', fontSize: '12px' }} cursor={{fill: 'transparent'}} />
+                        <Bar dataKey="ratio" radius={[4, 4, 0, 0]}>
+                           {
+                             (engine?.zones || []).slice(0, 6).map((entry, index) => (
+                               <Cell key={`cell-${index}`} fill={entry.status === 'OFF-LIMIT' ? '#EF4444' : entry.ratio > 0.8 ? '#F97316' : '#0D9488'} />
+                             ))
+                           }
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                 </div>
+              </div>
+           </div>
         </div>
       </div>
 

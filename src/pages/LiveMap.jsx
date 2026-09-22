@@ -8,6 +8,7 @@ import {
 import * as maplibregl from 'maplibre-gl'
 import maplibreWorker from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import 'maplibre-gl/dist/maplibre-gl.css'
+import { MAP_OFFSET, MAP_CENTER, MAP_ZOOM, applyOffset, MAP_STYLE_SUMMARY, MAP_STYLE_DETAILED, VENUE_INFRA, GATES } from '../lib/mapConfig';
 
 maplibregl.setWorkerUrl(maplibreWorker)
 
@@ -15,16 +16,7 @@ maplibregl.setWorkerUrl(maplibreWorker)
 // VENUE DIGITAL TWIN GEOMETRY & STYLE
 // ─────────────────────────────────────────────────────────────────────────────
 
-const MAP_OFFSET = [-74.0060, 40.7128] // Manhattan spatial foundation
-const MAP_CENTER = [0.001 + MAP_OFFSET[0], -0.0005 + MAP_OFFSET[1]]
-const MAP_ZOOM = 14.8
 
-function applyOffset(coords) {
-  if (typeof coords[0] === 'number') {
-    return [coords[0] + MAP_OFFSET[0], coords[1] + MAP_OFFSET[1]]
-  }
-  return coords.map(applyOffset)
-}
 
 const RISK_COLORS = {
   safe: { fill: '#3FB97C', border: '#3FB97C', text: '#3FB97C', bg: 'rgba(63, 185, 124, 0.12)', label: 'Safe' },
@@ -37,58 +29,8 @@ const RISK_COLORS = {
 // Fixed architectural polygon coordinates for all 12 zones forming the arena district
 
 // Venue infrastructure lines & grounds
-const VENUE_INFRA = {
-  type: 'FeatureCollection',
-  features: [
-    // Outer Venue Perimeter
-    {
-      type: 'Feature',
-      properties: { kind: 'perimeter' },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [[
-          [-0.0105, 0.0085], [0.0125, 0.0085], [0.0125, -0.0100], [-0.0105, -0.0100], [-0.0105, 0.0085]
-        ]]
-      }
-    },
-    // Central Main Promenade (East-West)
-    {
-      type: 'Feature',
-      properties: { kind: 'promenade' },
-      geometry: {
-        type: 'LineString',
-        coordinates: [[-0.010, 0.0003], [0.012, 0.0003]]
-      }
-    },
-    // North-South Concourse Arteries
-    {
-      type: 'Feature',
-      properties: { kind: 'promenade' },
-      geometry: {
-        type: 'LineString',
-        coordinates: [[-0.0015, 0.008], [-0.0015, -0.0095]]
-      }
-    },
-    {
-      type: 'Feature',
-      properties: { kind: 'promenade' },
-      geometry: {
-        type: 'LineString',
-        coordinates: [[0.0055, 0.008], [0.0055, -0.0095]]
-      }
-    }
-  ]
-}
 
 // Operational Points: Ingress/Egress Gates
-const GATES = [
-  { id: 'gate-n1', label: 'North Gate A', type: 'entry', lng: -0.004, lat: 0.0075 },
-  { id: 'gate-e1', label: 'East Transit Gate', type: 'entry', lng: 0.009, lat: 0.0075 },
-  { id: 'gate-s1', label: 'South Primary Gate 1-4', type: 'entry', lng: -0.005, lat: -0.0092 },
-  { id: 'gate-s2', label: 'South Express Gate 5-8', type: 'entry', lng: 0.002, lat: -0.0092 },
-  { id: 'gate-exit', label: 'South-East Main Exit', type: 'exit', lng: 0.008, lat: -0.0092 },
-  { id: 'gate-west', label: 'West Concourse Exit', type: 'exit', lng: -0.009, lat: 0.0003 }
-]
 
 // IoT Gateways Mesh Coordinates
 
@@ -97,23 +39,17 @@ function buildZonesGeoJSON(zones) {
   return {
     type: 'FeatureCollection',
     features: zones.map((z) => {
-      const hw = ((z.w || 90) / 2) / 22666;
-      const hh = ((z.h || 60) / 2) / 30000;
-      const baseCoords = [
-        [z.lng - hw, z.lat + hh],
-        [z.lng + hw, z.lat + hh],
-        [z.lng + hw, z.lat - hh],
-        [z.lng - hw, z.lat - hh],
-        [z.lng - hw, z.lat + hh]
-      ]
-      const coords = applyOffset(baseCoords)
-      const colorObj = RISK_COLORS[z.risk] || RISK_COLORS.safe
+      let geom = z.geometry;
+      if (!geom) return null;
+      const colorObj = RISK_COLORS[z.risk] || RISK_COLORS.safe;
       return {
         type: 'Feature',
         id: z.id,
+        geometry: { ...geom, coordinates: applyOffset(geom.coordinates) },
         properties: {
           id: z.id,
           name: z.name,
+          type: z.type || (z.id.includes('gate') ? 'gate' : z.id.includes('stage') ? 'stage' : z.id.includes('exit') ? 'exit' : 'zone'),
           sub: z.name.includes('·') ? z.name.split('·')[1].trim() : z.name,
           shortName: z.name.split('·')[0].trim(),
           count: z.count,
@@ -125,66 +61,106 @@ function buildZonesGeoJSON(zones) {
           borderColor: colorObj.border,
           lng: z.lng,
           lat: z.lat
-        },
-        geometry: {
-          type: 'Polygon',
-          coordinates: [coords]
         }
       }
-    })
+    }).filter(Boolean)
   }
 }
 
-function buildZoneCentersGeoJSON(zones) {
-  return {
-    type: 'FeatureCollection',
-    features: zones.map((z) => {
-      const colorObj = RISK_COLORS[z.risk] || RISK_COLORS.safe
-      return {
-        type: 'Feature',
-        id: z.id + '-center',
-        properties: {
-          fillColor: colorObj.fill
-        },
-        geometry: {
-          type: 'Point',
-          coordinates: applyOffset([z.lng, z.lat])
-        }
-      }
-    })
+function pointInPolygon(point, vs) {
+  let x = point[0], y = point[1];
+  let inside = false;
+  for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+    let xi = vs[i][0], yi = vs[i][1];
+    let xj = vs[j][0], yj = vs[j][1];
+    let intersect = ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
   }
+  return inside;
 }
 
-function buildFlowGeoJSON(zones) {
-  const features = []
-  zones.forEach((z) => {
-    if (z.netFlow > 2 && z.neighbors) {
-      z.neighbors.forEach((nId) => {
-        const neighbor = zones.find((item) => item.id === nId)
-        if (neighbor && neighbor.ratio < z.ratio && z.lng && neighbor.lng) {
-          const start = applyOffset([z.lng, z.lat])
-          const end = applyOffset([neighbor.lng, neighbor.lat])
-          features.push({
-            type: 'Feature',
-            properties: {
-              intensity: z.risk === 'critical' ? 'critical' : z.risk === 'high' ? 'high' : 'medium'
-            },
-            geometry: {
-              type: 'LineString',
-              coordinates: [start, end]
-            }
-          })
-        }
-      })
+function getCenter(geometry) {
+  if (!geometry) return [0, 0]
+  if (geometry.type === 'Point' && Array.isArray(geometry.coordinates)) {
+    return geometry.coordinates
+  }
+  let points = null
+  if (geometry.type === 'Polygon' && Array.isArray(geometry.coordinates?.[0])) {
+    points = geometry.coordinates[0]
+  } else if (geometry.type === 'MultiPolygon' && Array.isArray(geometry.coordinates?.[0]?.[0])) {
+    points = geometry.coordinates[0][0]
+  } else if (Array.isArray(geometry)) {
+    if (typeof geometry[0] === 'number') return geometry
+    if (Array.isArray(geometry[0])) {
+      points = Array.isArray(geometry[0][0]) ? geometry[0] : geometry
+    }
+  } else if (geometry.lng !== undefined && geometry.lat !== undefined) {
+    return [geometry.lng, geometry.lat]
+  }
+
+  if (!points || points.length === 0) {
+    if (typeof geometry.lng === 'number' && typeof geometry.lat === 'number') {
+      return [geometry.lng, geometry.lat]
+    }
+    return [0, 0]
+  }
+
+  const lngs = points.map((c) => c[0]).filter((v) => typeof v === 'number')
+  const lats = points.map((c) => c[1]).filter((v) => typeof v === 'number')
+  if (lngs.length === 0 || lats.length === 0) return [0, 0]
+  return [(Math.min(...lngs) + Math.max(...lngs)) / 2, (Math.min(...lats) + Math.max(...lats)) / 2]
+}
+
+function getStableHeatPoints(geometry) {
+  if (!geometry) return []
+  let ring = null
+  if (geometry.type === 'Polygon' && Array.isArray(geometry.coordinates?.[0])) {
+    ring = geometry.coordinates[0]
+  } else if (geometry.type === 'Point' && Array.isArray(geometry.coordinates)) {
+    return [geometry.coordinates]
+  } else if (Array.isArray(geometry)) {
+    ring = Array.isArray(geometry[0]) ? geometry : null
+  }
+
+  if (!ring || ring.length < 3) {
+    const center = getCenter(geometry)
+    return center && (center[0] !== 0 || center[1] !== 0) ? [center] : []
+  }
+
+  let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity
+  ring.forEach(p => {
+    if (Array.isArray(p)) {
+      if (p[0] < minLng) minLng = p[0]
+      if (p[0] > maxLng) maxLng = p[0]
+      if (p[1] < minLat) minLat = p[1]
+      if (p[1] > maxLat) maxLat = p[1]
     }
   })
-  return { type: 'FeatureCollection', features }
-}
 
-function getCenter(polygon) {
-  const lngs = polygon.map((c) => c[0])
-  const lats = polygon.map((c) => c[1])
-  return [(Math.min(...lngs) + Math.max(...lngs)) / 2, (Math.min(...lats) + Math.max(...lats)) / 2]
+  if (!isFinite(minLng) || !isFinite(maxLng) || !isFinite(minLat) || !isFinite(maxLat)) {
+    const center = getCenter(geometry)
+    return center && (center[0] !== 0 || center[1] !== 0) ? [center] : []
+  }
+
+  const points = []
+  const stepX = (maxLng - minLng) / 6
+  const stepY = (maxLat - minLat) / 6
+
+  if (stepX === 0 || stepY === 0) return [ring[0]]
+
+  for (let x = minLng + stepX/2; x < maxLng; x += stepX) {
+    for (let y = minLat + stepY/2; y < maxLat; y += stepY) {
+      if (pointInPolygon([x, y], ring)) {
+        points.push([x, y])
+      }
+    }
+  }
+
+  if (points.length === 0) {
+    const center = getCenter(geometry)
+    if (center && (center[0] !== 0 || center[1] !== 0)) points.push(center)
+  }
+  return points
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -192,35 +168,102 @@ function getCenter(polygon) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 
+
+function buildZoneCentersGeoJSON(zones) {
+  return {
+    type: 'FeatureCollection',
+    features: zones.flatMap(z => {
+      const points = getStableHeatPoints(z.geometry);
+      return points.map((p, i) => ({
+        type: 'Feature',
+        id: `${z.id}-pt-${i}`,
+        geometry: { type: 'Point', coordinates: applyOffset(p) },
+        properties: { heatWeight: z.ratio * (z.capacity / 5000) }
+      }));
+    })
+  };
+}
+
+function buildFlowGeoJSON(zones, recommendations) {
+  const features = [];
+  recommendations.forEach(rec => {
+    if (rec.status === 'executing' || rec.status === 'monitoring') {
+      const source = zones.find(z => z.id === rec.sourceZoneId);
+      const target = zones.find(z => z.id === rec.targetZoneId);
+      if (source && target) {
+        const p1 = getCenter(source.geometry);
+        const p2 = getCenter(target.geometry);
+        features.push({
+          type: 'Feature',
+          geometry: { type: 'LineString', coordinates: applyOffset([p1, p2]) },
+          properties: { intensity: 'redirect', isRedirect: true }
+        });
+      }
+    }
+  });
+  return { type: 'FeatureCollection', features };
+}
+
+function getConvexHull(points) {
+  if (points.length < 3) return points;
+  points.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const lower = [];
+  for (let p of points) {
+    while (lower.length >= 2) {
+      const p1 = lower[lower.length - 2];
+      const p2 = lower[lower.length - 1];
+      if ((p2[0] - p1[0]) * (p[1] - p1[1]) - (p2[1] - p1[1]) * (p[0] - p1[0]) <= 0) {
+        lower.pop();
+      } else break;
+    }
+    lower.push(p);
+  }
+  const upper = [];
+  for (let i = points.length - 1; i >= 0; i--) {
+    const p = points[i];
+    while (upper.length >= 2) {
+      const p1 = upper[upper.length - 2];
+      const p2 = upper[upper.length - 1];
+      if ((p2[0] - p1[0]) * (p[1] - p1[1]) - (p2[1] - p1[1]) * (p[0] - p1[0]) <= 0) {
+        upper.pop();
+      } else break;
+    }
+    upper.push(p);
+  }
+  upper.pop();
+  lower.pop();
+  return lower.concat(upper).concat([lower[0]]); // close it
+}
+
 function getDynamicPerimeter(zones) {
   if (!zones || zones.length === 0) {
     return [[[-0.0105, 0.0085], [0.0125, 0.0085], [0.0125, -0.0100], [-0.0105, -0.0100], [-0.0105, 0.0085]]];
   }
-  let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+  let allPoints = [];
   zones.forEach(z => {
-    const hw = ((z.w || 90) / 2) / 22666;
-    const hh = ((z.h || 60) / 2) / 30000;
-    const pts = [
-      [z.lng - hw, z.lat + hh],
-      [z.lng + hw, z.lat + hh],
-      [z.lng + hw, z.lat - hh],
-      [z.lng - hw, z.lat - hh]
-    ];
-    pts.forEach(p => {
-      if (p[0] < minLng) minLng = p[0];
-      if (p[0] > maxLng) maxLng = p[0];
-      if (p[1] < minLat) minLat = p[1];
-      if (p[1] > maxLat) maxLat = p[1];
-    });
+    if (z.geometry) {
+      if (z.geometry.type === 'Polygon' && Array.isArray(z.geometry.coordinates?.[0])) {
+        allPoints.push(...z.geometry.coordinates[0]);
+      } else if (z.geometry.type === 'Point' && Array.isArray(z.geometry.coordinates)) {
+        allPoints.push(z.geometry.coordinates);
+      }
+    } else if (typeof z.lng === 'number' && typeof z.lat === 'number') {
+      allPoints.push([z.lng, z.lat]);
+    }
   });
-  const pLng = 0.002, pLat = 0.002;
-  return [[
-    [minLng - pLng, maxLat + pLat],
-    [maxLng + pLng, maxLat + pLat],
-    [maxLng + pLng, minLat - pLat],
-    [minLng - pLng, minLat - pLat],
-    [minLng - pLng, maxLat + pLat]
-  ]];
+  if (allPoints.length === 0) return [[[-0.0105, 0.0085], [0.0125, 0.0085], [0.0125, -0.0100], [-0.0105, -0.0100], [-0.0105, 0.0085]]];
+
+  // Expand points slightly to act as a buffer boundary
+  const centerLng = allPoints.reduce((sum, p) => sum + p[0], 0) / allPoints.length;
+  const centerLat = allPoints.reduce((sum, p) => sum + p[1], 0) / allPoints.length;
+  const bufferScale = 1.05;
+  const bufferedPoints = allPoints.map(p => [
+    centerLng + (p[0] - centerLng) * bufferScale,
+    centerLat + (p[1] - centerLat) * bufferScale
+  ]);
+
+  const hull = getConvexHull(bufferedPoints);
+  return [hull];
 }
 
 export default function LiveMapPage({ isDashboardMode = false }) {
@@ -233,8 +276,10 @@ export default function LiveMapPage({ isDashboardMode = false }) {
   const markersRef = useRef([])
 
   const [mapReady, setMapReady] = useState(false)
-  const [showFlow, setShowFlow] = useState(true)
-    const [showGates, setShowGates] = useState(true)
+  const [showFlow, setShowFlow] = useState(!isDashboardMode)
+    const [showGates, setShowGates] = useState(!isDashboardMode)
+  const [showHeat, setShowHeat] = useState(!isDashboardMode)
+  const [showZones, setShowZones] = useState(true)
   const [showTeams, setShowTeams] = useState(true)
 
   // Safe fallback if engine is not provided
@@ -254,9 +299,12 @@ export default function LiveMapPage({ isDashboardMode = false }) {
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: isDashboardMode ? 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json' : 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+      style: isDashboardMode ? MAP_STYLE_SUMMARY : MAP_STYLE_DETAILED,
       center: MAP_CENTER,
-      zoom: MAP_ZOOM,
+      zoom: isDashboardMode ? MAP_ZOOM - 0.5 : MAP_ZOOM,
+      pitch: isDashboardMode ? 45 : 0,
+      bearing: isDashboardMode ? -15 : 0,
+      interactive: !isDashboardMode, // disable panning/zooming for summary map
       attributionControl: false,
       maxZoom: 18,
       minZoom: 13
@@ -331,14 +379,46 @@ export default function LiveMapPage({ isDashboardMode = false }) {
       map.addSource('zone-centers', { type: 'geojson', data: initialCentersGeo })
 
       map.addLayer({
-        id: 'zone-center-dot',
-        type: 'circle',
+        id: 'heat',
+        type: 'heatmap',
         source: 'zone-centers',
+        maxzoom: 18,
         paint: {
-          'circle-radius': 4,
-          'circle-color': ['get', 'fillColor'],
-          'circle-stroke-width': 2,
-          'circle-stroke-color': '#000000'
+          'heatmap-weight': [
+            'interpolate',
+            ['linear'],
+            ['get', 'heatWeight'],
+            0, 0,
+            1, 1
+          ],
+          'heatmap-intensity': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            11, 0.8,
+            15, 2.0,
+            18, 3.0
+          ],
+          'heatmap-color': [
+            'interpolate',
+            ['linear'],
+            ['heatmap-density'],
+            0, 'rgba(34, 197, 94, 0)',
+            0.15, 'rgba(34, 197, 94, 0.35)',
+            0.35, 'rgba(234, 179, 8, 0.65)',
+            0.65, 'rgba(249, 115, 22, 0.85)',
+            0.9, 'rgba(239, 68, 68, 0.95)'
+          ],
+          'heatmap-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            11, 15,
+            14, 40,
+            16, 75,
+            18, 120
+          ],
+          'heatmap-opacity': 0.85
         }
       })
 
@@ -350,9 +430,9 @@ export default function LiveMapPage({ isDashboardMode = false }) {
           'fill-color': ['get', 'fillColor'],
           'fill-opacity': [
             'case',
-            ['boolean', ['feature-state', 'selected'], false], 0.70,
-            ['boolean', ['feature-state', 'hover'], false], 0.50,
-            0.30
+            ['boolean', ['feature-state', 'selected'], false], 0.20,
+            ['boolean', ['feature-state', 'hover'], false], 0.15,
+            0.05
           ]
         }
       })
@@ -362,19 +442,29 @@ export default function LiveMapPage({ isDashboardMode = false }) {
         type: 'line',
         source: 'zones',
         paint: {
-          'line-color': ['get', 'borderColor'],
+          'line-color': [
+            'case',
+            ['==', ['get', 'isOffLimit'], true], '#EF4444',
+            ['==', ['get', 'isHighRisk'], true], '#F59E0B',
+            '#CBD5E1'
+          ],
           'line-width': [
             'case',
-            ['boolean', ['feature-state', 'selected'], false], 3,
-            ['boolean', ['feature-state', 'hover'], false], 2,
-            1.2
+            ['==', ['get', 'isOffLimit'], true], 3,
+            ['==', ['get', 'isHighRisk'], true], 2,
+            1
           ],
-          'line-opacity': 0.95
+          'line-opacity': [
+            'case',
+            ['==', ['get', 'isOffLimit'], true], 1,
+            ['==', ['get', 'isHighRisk'], true], 1,
+            0.6
+          ]
         }
       })
 
       // 3. Flow Lines Source & Layer
-      const initialFlowGeo = buildFlowGeoJSON(zones)
+      const initialFlowGeo = buildFlowGeoJSON(zones, engine?.recommendations || [])
       map.addSource('flow', { type: 'geojson', data: initialFlowGeo })
 
       map.addLayer({
@@ -385,11 +475,16 @@ export default function LiveMapPage({ isDashboardMode = false }) {
         paint: {
           'line-color': [
             'match', ['get', 'intensity'],
+            'redirect', '#0D9488', // Teal accent for active redirect
             'critical', '#E15945',
             'high', '#F0864B',
             '#58A6A6'
           ],
-          'line-width': 2.5,
+          'line-width': [
+            'case',
+            ['==', ['get', 'isRedirect'], true], 4,
+            2.5
+          ],
           'line-opacity': 0.85,
           'line-dasharray': [3, 3]
         }
@@ -477,7 +572,7 @@ export default function LiveMapPage({ isDashboardMode = false }) {
     try {
       map.getSource('zones')?.setData(buildZonesGeoJSON(zones))
       map.getSource('zone-centers')?.setData(buildZoneCentersGeoJSON(zones))
-      map.getSource('flow')?.setData(buildFlowGeoJSON(zones))
+      map.getSource('flow')?.setData(buildFlowGeoJSON(zones, engine?.recommendations || []))
 
       const dynamicPerimeterCoords = getDynamicPerimeter(zones)
       const offsetVenueInfra = {
@@ -496,7 +591,7 @@ export default function LiveMapPage({ isDashboardMode = false }) {
         })
       }
       map.getSource('venue-infra')?.setData(offsetVenueInfra)
-      map.getSource('flow')?.setData(buildFlowGeoJSON(zones))
+      map.getSource('flow')?.setData(buildFlowGeoJSON(zones, engine?.recommendations || []))
     } catch (_) {}
   }, [zones, mapReady])
 
@@ -515,9 +610,12 @@ export default function LiveMapPage({ isDashboardMode = false }) {
     const map = mapRef.current
     if (!map || !mapReady) return
     try {
-      map.setLayoutProperty('flow-line', 'visibility', showFlow ? 'visible' : 'none')
+      map.setLayoutProperty('flow-line', 'visibility', showFlow ? 'visible' : 'none');
+      map.setLayoutProperty('heat', 'visibility', showHeat ? 'visible' : 'none');
+      map.setLayoutProperty('zone-fill', 'visibility', showZones ? 'visible' : 'none');
+      map.setLayoutProperty('zone-border', 'visibility', showZones ? 'visible' : 'none');
     } catch (_) {}
-  }, [showFlow, mapReady])
+  }, [showFlow, showHeat, showZones, mapReady])
 
   useEffect(() => {
     markersRef.current.forEach(({ el, type }) => {
@@ -584,6 +682,7 @@ export default function LiveMapPage({ isDashboardMode = false }) {
         {/* Map Column (8 cols ~67%) */}
         <div className={isDashboardMode ? "w-full bg-surface-panel border border-border-default rounded-[6px] flex flex-col overflow-hidden relative flex-1 min-h-[400px]" : "xl:col-span-8 bg-surface-panel border border-border-default rounded-[6px] flex flex-col overflow-hidden relative"}>
           {/* Map Layer Toolbar */}
+          {!isDashboardMode && (
           <div className="px-4 py-2.5 border-b border-border-default flex flex-wrap items-center justify-between gap-2 bg-surface-raised">
             <div className="flex items-center gap-2 text-[12px] font-mono text-ink-dim">
               <Compass size={14} className="text-accent" />
@@ -591,31 +690,15 @@ export default function LiveMapPage({ isDashboardMode = false }) {
             </div>
 
             <div className="flex items-center gap-1.5 flex-wrap">
-              <button
-                onClick={() => setShowFlow((v) => !v)}
-                className={`inline-flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1 text-[11px] font-mono transition-colors ${
-                  showFlow
-                    ? 'border-accent bg-accent/15 text-accent font-semibold'
-                    : 'border-border-default bg-surface-panel text-ink-dim hover:text-ink'
-                }`}
-              >
-                <Activity size={12} /> Flow
-              </button>
 
-              <button
-                onClick={() => setShowGates((v) => !v)}
-                className={`inline-flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1 text-[11px] font-mono transition-colors ${
-                  showGates
-                    ? 'border-accent bg-accent/15 text-accent font-semibold'
-                    : 'border-border-default bg-surface-panel text-ink-dim hover:text-ink'
-                }`}
-              >
-                <MapPin size={12} /> Gates
-              </button>
+<button onClick={() => setShowHeat(v => !v)} className={`inline-flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1 text-[11px] font-mono transition-colors ${showHeat ? 'border-accent bg-accent/15 text-accent font-semibold' : 'border-border-default bg-surface-panel text-ink-dim hover:text-ink'}`}>Heat</button>
+<button onClick={() => setShowZones(v => !v)} className={`inline-flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1 text-[11px] font-mono transition-colors ${showZones ? 'border-accent bg-accent/15 text-accent font-semibold' : 'border-border-default bg-surface-panel text-ink-dim hover:text-ink'}`}>Zones</button>
+<button onClick={() => setShowFlow(v => !v)} className={`inline-flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1 text-[11px] font-mono transition-colors ${showFlow ? 'border-accent bg-accent/15 text-accent font-semibold' : 'border-border-default bg-surface-panel text-ink-dim hover:text-ink'}`}>Flow</button>
+<button onClick={() => setShowGates(v => !v)} className={`inline-flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1 text-[11px] font-mono transition-colors ${showGates ? 'border-accent bg-accent/15 text-accent font-semibold' : 'border-border-default bg-surface-panel text-ink-dim hover:text-ink'}`}>Infrastructure</button>
 
-              
             </div>
           </div>
+          )}
 
           {/* MapLibre Canvas Viewport */}
           <div className="relative flex-1 w-full bg-[#0B0F14] min-h-[520px]">
@@ -759,6 +842,10 @@ export default function LiveMapPage({ isDashboardMode = false }) {
                   </div>
                 </div>
 
+                <div className="flex justify-between items-center p-3 rounded-[4px] bg-surface-raised border border-border-default">
+                    <span className="text-[11px] font-mono text-ink-faint uppercase">Remaining Cap</span>
+                    <span className="font-data text-[13px] font-semibold text-ink">{Math.max(0, selectedZone.capacity - selectedZone.count).toLocaleString()}</span>
+                  </div>
                 {/* Predictive Horizon */}
                 {selectedZone.prediction && (
                   <div className="p-3 rounded-[6px] bg-surface-raised border border-border-default">

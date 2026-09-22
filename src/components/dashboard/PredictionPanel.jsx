@@ -1,80 +1,114 @@
 import { useMemo } from 'react'
-import { TrendingUp, Gauge } from 'lucide-react'
-import { RISK_STYLES } from '../../lib/statusStyles.js'
+import { Sparkles, ArrowUpRight, ShieldAlert } from 'lucide-react'
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
 
-export default function PredictionPanel({ zones, onSelect }) {
-  const focusZone = useMemo(() => {
-    return [...zones].sort((a, b) => (b.occupancyPercentage ?? b.ratio) - (a.occupancyPercentage ?? a.ratio))[0]
-  }, [zones])
-
-  if (!focusZone) return null
-  const style = RISK_STYLES[focusZone.risk]
-  const maxProjected = Math.max(...focusZone.prediction.projections.map((p) => p.value), focusZone.capacity)
-
-  return (
-    <div id="predictions" className="panel p-4 lg:p-5 h-full flex flex-col">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Gauge size={16} className="text-brand-400" />
-          <h2 className="font-display font-semibold text-[15px]">Crowd Prediction Engine</h2>
-        </div>
-        <button
-          onClick={() => onSelect(focusZone.id)}
-          className="text-[11.5px] text-brand-300 hover:text-brand-200"
-        >
-          View zone →
-        </button>
+export default function PredictionPanel({ aiPrediction, onSelect }) {
+  if (!aiPrediction) return (
+    <div id="predictions" className="panel p-4 lg:p-5 h-full flex flex-col bg-surface-panel border border-border-default rounded-[6px]">
+      <div className="flex items-center gap-2 mb-4">
+        <Sparkles size={16} className="text-accent" />
+        <h2 className="font-display font-semibold text-[15px] uppercase tracking-wider text-ink">AI PREDICTION</h2>
       </div>
-
-      <p className="text-[12.5px] text-ink-faint mb-4">
-        Highest-risk zone right now: <span className="text-ink">{focusZone.name}</span>
-      </p>
-
-      <div className="grid grid-cols-3 gap-3 mb-4">
-        <Stat label="Current" value={`${(focusZone.occupancy ?? focusZone.count).toLocaleString()}`} sub={`/ ${focusZone.capacity.toLocaleString()}`} />
-        <Stat
-          label="Net flow"
-          value={`${focusZone.netFlow >= 0 ? '+' : ''}${focusZone.netFlow}`}
-          sub="people/min"
-        />
-        <Stat label="Occupancy" value={`${Math.round((focusZone.occupancyPercentage ?? focusZone.ratio) * 100)}%`} tone={style.text} />
-      </div>
-
-      <div className="space-y-2 mb-4">
-        {focusZone.prediction.projections.map((p) => (
-          <div key={p.min} className="flex items-center gap-3">
-            <span className="text-[11px] text-ink-faint w-14 shrink-0">+{p.min} min</span>
-            <div className="flex-1 h-2 rounded-full bg-base-panel overflow-hidden">
-              <div
-                className={`${style.bg} h-full rounded-full`}
-                style={{ width: `${Math.min(100, (p.value / maxProjected) * 100)}%` }}
-              />
-            </div>
-            <span className="font-data text-[12px] text-ink w-14 text-right shrink-0">{p.value}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className={`rounded-lg border ${style.border} ${style.soft} px-3.5 py-3 flex items-start gap-2.5`}>
-        <TrendingUp size={15} className={`${style.text} shrink-0 mt-0.5`} />
-        <p className="text-[12.5px] text-ink leading-snug">
-          {focusZone.prediction.breachIn
-            ? `Capacity breach expected in approximately ${focusZone.prediction.breachIn} minutes at the current flow rate.`
-            : 'No capacity breach expected on the current trend.'}
-        </p>
+      <div className="flex-1 flex items-center justify-center text-ink-faint text-[13px]">
+        No critical trajectory identified.
       </div>
     </div>
   )
-}
 
-function Stat({ label, value, sub, tone = 'text-ink' }) {
   return (
-    <div className="rounded-lg border border-base-hair bg-base-panel px-3 py-2.5">
-      <p className="text-[10.5px] text-ink-faint">{label}</p>
-      <p className={`font-data text-[16px] font-semibold ${tone}`}>
-        {value}
-        {sub && <span className="text-[10.5px] text-ink-faint font-body ml-1">{sub}</span>}
-      </p>
+    <div id="predictions" className="panel p-4 lg:p-5 h-full flex flex-col bg-surface-panel border border-border-default rounded-[6px]">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Sparkles size={16} className="text-accent" />
+          <h2 className="font-display font-semibold text-[15px] uppercase tracking-wider text-ink">AI PREDICTION</h2>
+        </div>
+      </div>
+
+      <div className="flex-1 flex flex-col min-h-0 bg-surface-raised border border-border-default rounded-[6px] p-4 relative overflow-hidden">
+
+        {/* Top Section */}
+        <div className="mb-4">
+          <div className="flex justify-between items-start mb-1">
+            <h3 className="font-display font-bold text-lg text-ink">
+              {aiPrediction.zoneName.split('·')[0].trim()}
+            </h3>
+            <span className="text-[10px] font-mono font-bold uppercase text-status-critical bg-status-critical/10 px-2 py-0.5 rounded border border-status-critical/20">
+              Likely to become OFF-LIMIT
+            </span>
+          </div>
+          <button
+            onClick={() => onSelect(aiPrediction.predictedZone)}
+            className="text-[12px] text-ink-dim hover:text-ink transition-colors flex items-center gap-1"
+          >
+            Inspect zone telemetry <ArrowUpRight size={13} />
+          </button>
+        </div>
+
+
+        {/* Stats Grid + Gauge */}
+        <div className="grid grid-cols-2 gap-3 mb-4 items-center">
+          <div className="flex flex-col gap-3">
+            <div className="bg-surface-panel border border-border-default p-2.5 rounded-[4px]">
+              <div className="text-[10.5px] font-mono text-ink-faint uppercase mb-1">Occupancy</div>
+              <div className="font-data text-[15px] font-semibold text-status-high">
+                {Math.round(aiPrediction.occupancy * 100)}%
+              </div>
+            </div>
+            <div className="bg-surface-panel border border-border-default p-2.5 rounded-[4px]">
+              <div className="text-[10.5px] font-mono text-ink-faint uppercase mb-1">Trajectory</div>
+              <div className="font-data text-[15px] font-semibold text-status-critical">
+                +{aiPrediction.netFlow}/m inflow
+              </div>
+            </div>
+          </div>
+          <div className="h-[120px] bg-surface-panel border border-border-default rounded-[4px] relative flex flex-col items-center justify-center">
+             <span className="absolute top-2 left-2 text-[10px] font-mono text-ink-faint uppercase">Pressure Dial</span>
+             <ResponsiveContainer width="100%" height={80} className="mt-4">
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: 'Filled', value: Math.round(aiPrediction.occupancy * 100) },
+                      { name: 'Remaining', value: 100 - Math.round(aiPrediction.occupancy * 100) }
+                    ]}
+                    cx="50%" cy="100%"
+                    startAngle={180} endAngle={0}
+                    innerRadius={30} outerRadius={40}
+                    paddingAngle={2}
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    <Cell fill="#EF4444" />
+                    <Cell fill="#E2E8F0" />
+                  </Pie>
+                </PieChart>
+             </ResponsiveContainer>
+             <span className="absolute bottom-2 font-display font-bold text-status-critical text-[13px]">CRITICAL</span>
+          </div>
+        </div>
+
+        {/* Explainability */}
+        <div className="flex flex-col gap-2 flex-1">
+          <div className="text-[11.5px] font-mono uppercase text-ink-faint mb-0.5">Estimated Horizon</div>
+          <div className="text-[14px] text-ink font-semibold flex items-center gap-2">
+            <ShieldAlert size={14} className="text-status-critical" />
+            {aiPrediction.estimatedTimeToCritical
+              ? `~${aiPrediction.estimatedTimeToCritical} minutes`
+              : 'Imminent Risk'}
+          </div>
+
+          <div className="mt-3">
+             <div className="text-[11.5px] font-mono uppercase text-ink-faint mb-1.5">Contributing Factors</div>
+             <ul className="space-y-1.5">
+               {aiPrediction.contributingFactors.map((factor, idx) => (
+                 <li key={idx} className="text-[12.5px] text-ink-dim flex gap-2 items-start">
+                   <span className="text-status-high mt-1 text-[14px] leading-none">•</span> {factor}
+                 </li>
+               ))}
+             </ul>
+          </div>
+        </div>
+
+      </div>
     </div>
   )
 }

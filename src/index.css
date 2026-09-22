@@ -12,8 +12,8 @@ html, body, #root {
 
 body {
   @apply bg-surface-base text-ink font-body antialiased;
-  background-color: #0F1419;
-  color: #E6EDF3;
+  background-color: #F8FAFC;
+  color: #0F172A;
 }
 
 ::selection {

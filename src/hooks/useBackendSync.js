@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { backendAdapter } from '../lib/backendAdapter';
+import { computeIntelligence } from '../lib/crowdEngine.js';
 
 export function useBackendSync(localEngine) {
   const [backendZoneOverrides, setBackendZoneOverrides] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const bufferRef = useRef([]);
+  const activeRecsRef = useRef(new Map());
 
   useEffect(() => {
     let mounted = true;
@@ -113,10 +115,30 @@ export function useBackendSync(localEngine) {
     };
   }
 
+
+  const intel = useMemo(() => {
+    if (!backendZoneOverrides) return { aiPrediction: localEngine.aiPrediction, contingencyTarget: localEngine.contingencyTarget, recommendations: localEngine.recommendations };
+    // Compute derived intelligence from merged zones to properly handle WebSocket updates
+    const computed = computeIntelligence(mergedZones, activeRecsRef.current);
+    activeRecsRef.current = computed.recommendationsMap;
+    // Map over localEngine recommendations to preserve 'approved'/'dismissed' states from local actions,
+    // while appending any new pending ones from computed.
+    const finalRecs = computed.recommendations.map(cr => {
+       const existing = localEngine.recommendations.find(lr => lr.id === cr.id);
+       if (existing && existing.status !== 'pending') return existing;
+       return cr;
+    });
+    return { aiPrediction: computed.aiPrediction, contingencyTarget: computed.contingencyTarget, recommendations: finalRecs };
+  }, [mergedZones, backendZoneOverrides, localEngine.aiPrediction, localEngine.recommendations]);
+
   return {
     ...localEngine,
     zones: mergedZones,
     kpis: mergedKpis,
+    aiPrediction: intel.aiPrediction,
+    contingencyTarget: intel.contingencyTarget,
+    recommendations: intel.recommendations,
     isBackendSynced: isConnected && backendZoneOverrides !== null
   };
+
 }

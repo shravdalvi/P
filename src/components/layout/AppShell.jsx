@@ -3,9 +3,11 @@ import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar.jsx'
 import Header from './Header.jsx'
 import { useCrowdEngine } from '../../lib/crowdEngine.js'
+import { useBackendSync } from '../../hooks/useBackendSync.js'
 
 export default function AppShell({ role, onLogout }) {
-  const engine = useCrowdEngine()
+  const baseEngine = useCrowdEngine()
+  const engine = useBackendSync(baseEngine)
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (

@@ -27,7 +27,7 @@ function Card({ icon: Icon, label, value, suffix, tone = 'ink' }) {
 export default function KPICards({ kpis }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-      <Card icon={Users} label="Total visitors" value={kpis.totalVisitors.toLocaleString()} />
+      <Card icon={Users} label="Total visitors" value={kpis.totalCrowd.toLocaleString()} />
       <Card icon={LayoutGrid} label="Active zones" value={kpis.activeZones} />
       <Card
         icon={ShieldAlert}

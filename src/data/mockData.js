@@ -11,18 +11,20 @@ export const EVENT = {
 }
 
 export const ZONES = [
-  { id: 'zone-a', name: 'Zone A · North Stand', capacity: 4200, x: 40, y: 40, w: 150, h: 90, neighbors: ['zone-b', 'gate-1'] },
-  { id: 'zone-b', name: 'Zone B · East Concourse', capacity: 3600, x: 210, y: 40, w: 150, h: 90, neighbors: ['zone-a', 'zone-c'] },
-  { id: 'zone-c', name: 'Zone C · Main Stage Front', capacity: 5000, x: 210, y: 150, w: 150, h: 90, neighbors: ['zone-b', 'zone-d', 'main-stage'] },
-  { id: 'zone-d', name: 'Zone D · West Concourse', capacity: 3600, x: 40, y: 150, w: 150, h: 90, neighbors: ['zone-c', 'zone-e'] },
-  { id: 'zone-e', name: 'Zone E · South Stand', capacity: 4200, x: 40, y: 260, w: 150, h: 90, neighbors: ['zone-d', 'zone-f'] },
-  { id: 'zone-f', name: 'Zone F · Plaza South', capacity: 2800, x: 210, y: 260, w: 150, h: 90, neighbors: ['zone-e', 'food-court'] },
-  { id: 'main-stage', name: 'Main Stage Pit', capacity: 6000, x: 380, y: 150, w: 150, h: 90, neighbors: ['zone-c'] },
-  { id: 'food-court', name: 'Food Court', capacity: 2200, x: 380, y: 260, w: 150, h: 90, neighbors: ['zone-f'] },
-  { id: 'parking', name: 'Parking Deck', capacity: 5200, x: 380, y: 40, w: 150, h: 90, neighbors: ['gate-1'] },
-  { id: 'gate-1', name: 'Entry Gates 1–4', capacity: 3000, x: 40, y: 370, w: 150, h: 70, neighbors: ['zone-a', 'zone-e'] },
-  { id: 'gate-2', name: 'Entry Gates 5–8', capacity: 3000, x: 210, y: 370, w: 150, h: 70, neighbors: ['zone-c'] },
-  { id: 'exit', name: 'Exit Concourse', capacity: 4000, x: 380, y: 370, w: 150, h: 70, neighbors: ['food-court'] }
+
+  { id: 'zone-a', name: 'Zone A · North Stand', capacity: 4200, x: 40, y: 40, w: 150, h: 90, neighbors: ['zone-b', 'gate-1'], geometry: { type: 'Polygon', coordinates: [[[-0.006978,0.00635],[-0.001022,0.00635],[-0.00036,0.00365],[-0.00764,0.00365],[-0.006978,0.00635]]] } },
+  { id: 'zone-b', name: 'Zone B · East Concourse', capacity: 3600, x: 210, y: 40, w: 150, h: 90, neighbors: ['zone-a', 'zone-c'], geometry: { type: 'Polygon', coordinates: [[[0.000522,0.00635],[0.006478,0.00635],[0.00714,0.00365],[-0.00014,0.00365],[0.000522,0.00635]]] } },
+  { id: 'zone-c', name: 'Zone C · Main Stage Front', capacity: 5000, x: 210, y: 150, w: 150, h: 90, neighbors: ['zone-b', 'zone-d', 'main-stage'], geometry: { type: 'Polygon', coordinates: [[[0.000522,0.002683],[0.006478,0.002683],[0.00714,-0.000017],[-0.00014,-0.000017],[0.000522,0.002683]]] } },
+  { id: 'zone-d', name: 'Zone D · West Concourse', capacity: 3600, x: 40, y: 150, w: 150, h: 90, neighbors: ['zone-c', 'zone-e'], geometry: { type: 'Polygon', coordinates: [[[-0.006978,0.002683],[-0.001022,0.002683],[-0.00036,-0.000017],[-0.00764,-0.000017],[-0.006978,0.002683]]] } },
+  { id: 'zone-e', name: 'Zone E · South Stand', capacity: 4200, x: 40, y: 260, w: 150, h: 90, neighbors: ['zone-d', 'zone-f'], geometry: { type: 'Polygon', coordinates: [[[-0.006978,-0.000983],[-0.001022,-0.000983],[-0.00036,-0.003683],[-0.00764,-0.003683],[-0.006978,-0.000983]]] } },
+  { id: 'zone-f', name: 'Zone F · Plaza South', capacity: 2800, x: 210, y: 260, w: 150, h: 90, neighbors: ['zone-e', 'food-court'], geometry: { type: 'Polygon', coordinates: [[[0.000522,-0.000983],[0.006478,-0.000983],[0.00714,-0.003683],[-0.00014,-0.003683],[0.000522,-0.000983]]] } },
+  { id: 'main-stage', name: 'Main Stage Pit', capacity: 6000, x: 380, y: 150, w: 150, h: 90, neighbors: ['zone-c'], geometry: { type: 'Polygon', coordinates: [[[0.008353,0.002833],[0.013648,0.002833],[0.014309,0.002083],[0.014309,0.000583],[0.013648,-0.000167],[0.008353,-0.000167],[0.007692,0.000583],[0.007692,0.002083],[0.008353,0.002833]]] } },
+  { id: 'food-court', name: 'Food Court', capacity: 2200, x: 380, y: 260, w: 150, h: 90, neighbors: ['zone-f'], geometry: { type: 'Polygon', coordinates: [[[0.007692,-0.000833],[0.013648,-0.000983],[0.014309,-0.003383],[0.011993,-0.003833],[0.008022,-0.003533],[0.007692,-0.000833]]] } },
+  { id: 'parking', name: 'Parking Deck', capacity: 5200, x: 380, y: 40, w: 150, h: 90, neighbors: ['gate-1'], geometry: { type: 'Polygon', coordinates: [[[0.007692,0.0065],[0.013648,0.00635],[0.014309,0.00395],[0.011993,0.0035],[0.008022,0.0038],[0.007692,0.0065]]] } },
+  { id: 'gate-1', name: 'Entry Gates 1–4', capacity: 3000, x: 40, y: 370, w: 150, h: 70, neighbors: ['zone-a', 'zone-e'], geometry: { type: 'Polygon', coordinates: [[[-0.007309,-0.005083],[-0.006647,-0.0045],[-0.001353,-0.0045],[-0.000691,-0.005083],[-0.001022,-0.0066],[-0.006978,-0.0066],[-0.007309,-0.005083]]] } },
+  { id: 'gate-2', name: 'Entry Gates 5–8', capacity: 3000, x: 210, y: 370, w: 150, h: 70, neighbors: ['zone-c'], geometry: { type: 'Polygon', coordinates: [[[0.000191,-0.005083],[0.000853,-0.0045],[0.006147,-0.0045],[0.006809,-0.005083],[0.006478,-0.0066],[0.000522,-0.0066],[0.000191,-0.005083]]] } },
+  { id: 'exit', name: 'Exit Concourse', capacity: 4000, x: 380, y: 370, w: 150, h: 70, neighbors: ['food-court'], geometry: { type: 'Polygon', coordinates: [[[0.007692,-0.005083],[0.008353,-0.0045],[0.013648,-0.0045],[0.014309,-0.005083],[0.013978,-0.0066],[0.008022,-0.0066],[0.007692,-0.005083]]] } }
+
 ]
 
 // Starting occupancy - deliberately spans safe / moderate / high / critical
