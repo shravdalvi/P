@@ -46,6 +46,7 @@ class BackendAdapter {
       this.ws.onopen = () => {
         console.log('[BackendAdapter] Connected to realtime backend');
         this.reconnectAttempts = 0;
+        this._handleEvent({ type: 'sys.connected', entityId: 'sys', data: {} });
       };
 
       this.ws.onmessage = (event) => {
@@ -59,6 +60,7 @@ class BackendAdapter {
 
       this.ws.onclose = () => {
         console.log('[BackendAdapter] Disconnected from backend');
+        this._handleEvent({ type: 'sys.disconnected', entityId: 'sys', data: {} });
         this._attemptReconnect();
       };
 

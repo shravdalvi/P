@@ -35,7 +35,7 @@ export default function RecommendationPanel({ recommendations, zones, contingenc
       <div className="flex-1 flex flex-col min-h-0 bg-surface-raised border border-border-default rounded-[6px] p-4 relative overflow-hidden">
         <div className="mb-3 border-b border-border-default pb-3">
           <p className="text-[14px] font-bold text-status-critical mb-1 uppercase tracking-wide">
-            {activeRec.sourceZone.split('·')[0].trim()} IS OFF-LIMIT
+            {activeRec.sourceZone.split('·')[0].trim()} {activeRec.status === 'pending' ? 'NEEDS CROWD CONTROL' : 'IS UNDER CROWD CONTROL'}
           </p>
           <p className="text-[13px] text-ink font-medium">
             Redirect incoming crowd to <span className="text-accent">{activeRec.targetZone.split('·')[0].trim()}</span>

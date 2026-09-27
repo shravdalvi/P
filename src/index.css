@@ -88,22 +88,108 @@ body {
   right: 16px !important;
 }
 
-.maplibregl-ctrl-attrib {
-  display: none !important;
-}
-
+/* ── Map popups ─────────────────────────────────────────────────────────── */
+.crowd-popup .maplibregl-popup-content,
 .custom-map-popup .maplibregl-popup-content {
-  padding: 14px 16px 12px !important;
-  border-radius: 18px !important;
-  border: 1px solid #eef1ee !important;
-  box-shadow: 0 18px 30px -20px rgba(18, 48, 71, 0.28) !important;
-  background: #ffffff !important;
-  color: #123047 !important;
+  padding: 12px 14px 10px !important;
+  border-radius: 8px !important;
+  border: 1px solid #CBD5E1 !important;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.16) !important;
+  background: #FFFFFF !important;
+  color: #0F172A !important;
+}
+.crowd-popup .maplibregl-popup-tip,
+.custom-map-popup .maplibregl-popup-tip {
+  border-top-color: #FFFFFF !important;
+}
+.crowd-popup .maplibregl-popup-close-button {
+  top: 6px !important;
+  right: 6px !important;
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 4px !important;
+  background: transparent !important;
+  color: #64748B !important;
+  font-size: 14px !important;
+  line-height: 18px !important;
+  border: none !important;
+  padding: 0 !important;
+}
+.crowd-popup .maplibregl-popup-close-button:hover {
+  background: #F1F5F9 !important;
+  color: #0F172A !important;
 }
 
-.custom-map-popup .maplibregl-popup-tip {
-  background: #ffffff !important;
-  border: 1px solid #eef1ee !important;
+/* ── Zone Centroid HUD Badges ─────────────────────────────────────────── */
+.zone-centroid-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+  transform: translate(-50%, -50%);
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s;
+  z-index: 10;
+}
+.zone-centroid-badge:hover {
+  transform: translate(-50%, -56%) scale(1.06);
+  z-index: 25;
+}
+.zone-badge-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px 3px 6px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.16);
+}
+.zone-centroid-badge.selected .zone-badge-pill {
+  border-color: #38BDF8 !important;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.4), 0 4px 12px rgba(0,0,0,0.8);
+}
+.zone-badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+/* ── ESP-32 Hardware Gateway Markers & Radar Halos ─────────────────────── */
+.esp32-gateway-marker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: rgba(14, 165, 233, 0.15);
+  border: 1.5px solid #0EA5E9;
+  color: #38BDF8;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(14, 165, 233, 0.4);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.esp32-gateway-marker:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 20px rgba(14, 165, 233, 0.8);
+}
+.esp32-radar-halo {
+  position: absolute;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 1px dashed rgba(14, 165, 233, 0.5);
+  pointer-events: none;
+  animation: radarPulse 2.8s linear infinite;
+}
+@keyframes radarPulse {
+  0% { transform: scale(0.6); opacity: 0.9; }
+  50% { opacity: 0.4; }
+  100% { transform: scale(1.4); opacity: 0; }
 }
 
 /* ── Entry / Exit gate markers ─────────────────────────────────────────── */
@@ -111,56 +197,14 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(18,48,71,.18);
-  transition: transform .15s, box-shadow .15s;
-}
-.gate-marker:hover { transform: scale(1.18); box-shadow: 0 4px 14px rgba(18,48,71,.24); }
-.gate-marker--entry { background: #EAF7F3; color: #1E6D5B; border: 2px solid #1E6D5B; }
-.gate-marker--exit  { background: #FDE9E7; color: #C44135; border: 2px solid #E9695D; }
-
-/* ── Device / gateway dots ──────────────────────────────────────────────── */
-.device-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: #1E6D5B;
-  border: 1.5px solid #fff;
-  box-shadow: 0 0 0 3px rgba(30,109,91,.18);
-  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,.6);
   transition: transform .15s;
 }
-.device-dot:hover { transform: scale(1.7); }
+.gate-marker:hover { transform: scale(1.2); }
+.gate-marker--entry { background: rgba(16, 185, 129, 0.15); color: #34D399; border: 1.5px solid #10B981; }
+.gate-marker--exit  { background: rgba(244, 63, 94, 0.15); color: #FB7185; border: 1.5px solid #F43F5E; }
 
-/* ── Custom popup ───────────────────────────────────────────────────────── */
-.crowd-popup .maplibregl-popup-content {
-  padding: 14px 16px 12px !important;
-  border-radius: 18px !important;
-  border: 1px solid #eef1ee !important;
-  box-shadow: 0 18px 30px -20px rgba(18,48,71,.28) !important;
-  background: #fff !important;
-  color: #123047 !important;
-}
-.crowd-popup .maplibregl-popup-tip {
-  border-top-color: #fff !important;
-}
-.crowd-popup .maplibregl-popup-close-button {
-  top: 8px !important;
-  right: 10px !important;
-  width: 22px !important;
-  height: 22px !important;
-  border-radius: 50% !important;
-  background: #F3F4F6 !important;
-  color: #798B99 !important;
-  font-size: 16px !important;
-  line-height: 22px !important;
-  border: none !important;
-  padding: 0 !important;
-}
-.crowd-popup .maplibregl-popup-close-button:hover {
-  background: #EEF1EE !important;
-  color: #123047 !important;
-}
