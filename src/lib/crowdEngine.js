@@ -131,7 +131,9 @@ export function computeIntelligence(zones, activeRecsMap = new Map()) {
     };
   }
 
-  const offLimitZones = zones.filter(z => z.status === 'OFF-LIMIT');
+  // Critical zones need an operator decision before they become fully closed.
+  // This keeps the simulator useful on first paint and mirrors a real early-warning workflow.
+  const offLimitZones = zones.filter(z => z.status === 'OFF-LIMIT' || z.risk === 'critical');
   const newActiveRecs = new Map(activeRecsMap);
 
   function findBestTarget(excludeId) {
@@ -206,7 +208,7 @@ export function computeIntelligence(zones, activeRecsMap = new Map()) {
   // Clean up resolved
   for (const [zoneId, rec] of newActiveRecs.entries()) {
     const z = zones.find(z => z.id === zoneId);
-    if (z && z.status !== 'OFF-LIMIT') {
+    if (z && z.status !== 'OFF-LIMIT' && z.risk !== 'critical') {
        if (rec.status === 'pending') {
          newActiveRecs.delete(zoneId);
        } else if (rec.status === 'approved' || rec.status === 'executing' || rec.status === 'monitoring') {
@@ -255,12 +257,13 @@ function buildLayoutFromZones(zones) {
 }
 
 export function useCrowdEngine() {
+  const [initialZones] = useState(() => seedZones())
   const [running, setRunning] = useState(true)
   const [scenario, setScenario] = useState('normal')
-  const [zones, setZones] = useState(seedZones)
-  const [eventLayout, setEventLayout] = useState(() => buildLayoutFromZones(seedZones()))
+  const [zones, setZones] = useState(initialZones)
+  const [eventLayout, setEventLayout] = useState(() => buildLayoutFromZones(initialZones))
   const [alerts, setAlerts] = useState([])
-  const [recommendations, setRecommendations] = useState([])
+  const [recommendations, setRecommendations] = useState(() => computeIntelligence(initialZones).recommendations)
   const [actionHistory, setActionHistory] = useState([])
   const [flowHistory, setFlowHistory] = useState([])
   const [activityLog, setActivityLog] = useState(INITIAL_ACTIVITY_LOG)
@@ -285,7 +288,7 @@ export function useCrowdEngine() {
   const tickRef = useRef(null)
 
   // Recommendation engine state tracking
-  const activeRecsRef = useRef(new Map()) // id -> recommendation
+  const activeRecsRef = useRef(new Map(recommendations.map((rec) => [rec.sourceZoneId, rec]))) // source zone id -> recommendation
 
   useEffect(() => {
     if (!running) return
@@ -450,7 +453,7 @@ export function useCrowdEngine() {
         setTimeout(() => {
           const currentRec = Array.from(activeRecsRef.current.values()).find(r => r.id === id);
           if (currentRec && currentRec.status === 'executing') currentRec.status = 'monitoring';
-          setActionHistory(prev => prev.map(h => h.sourceZoneId === rec.sourceZoneId && h.status === 'Executing' ? { ...h, status: 'MONITORING' } : h));
+          setActionHistory(prev => prev.map(h => h.sourceZoneId === rec.sourceZoneId && h.status === 'EXECUTING' ? { ...h, status: 'MONITORING' } : h));
 
           setTimeout(() => {
              const currentRec2 = Array.from(activeRecsRef.current.values()).find(r => r.id === id);
@@ -458,7 +461,7 @@ export function useCrowdEngine() {
                 activeRecsRef.current.delete(currentRec2.sourceZoneId);
                 setRecommendations(Array.from(activeRecsRef.current.values()));
              }
-             setActionHistory(prev => prev.map(h => h.sourceZoneId === rec.sourceZoneId && h.status === 'Monitoring' ? { ...h, status: 'RESOLVED' } : h));
+             setActionHistory(prev => prev.map(h => h.sourceZoneId === rec.sourceZoneId && h.status === 'MONITORING' ? { ...h, status: 'RESOLVED' } : h));
           }, 8000);
         }, 3000);
         pushLog(`Redirecting crowd from ${rec.sourceZone} to ${rec.targetZone}.`, 'success');
@@ -478,7 +481,7 @@ export function useCrowdEngine() {
       }
       setRecommendations(Array.from(activeRecsRef.current.values()));
     },
-    [pushLog]
+    [pushLog, zones]
   )
 
 
