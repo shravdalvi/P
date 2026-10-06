@@ -1,4 +1,4 @@
-# Pulse Command
+# Vibecheck Controller
 
 Mega-event crowd management & hospitality orchestration platform — a command-center
 web app that monitors live crowd density, predicts capacity breaches, and drafts
@@ -37,7 +37,7 @@ separate component — nothing is one giant file.
 ## Tech stack
 
 - React 18 + Vite
-- Tailwind CSS (custom "Pulse Command" design tokens — see `tailwind.config.js`)
+- Tailwind CSS (custom "Vibecheck Controller" design tokens — see `tailwind.config.js`)
 - react-router-dom for role-gated routing
 - Recharts for analytics
 - lucide-react for icons

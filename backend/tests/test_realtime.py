@@ -8,7 +8,7 @@ client = TestClient(app)
 def test_health_check():
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok", "service": "pulse-command-backend"}
+    assert response.json() == {"status": "ok", "service": "vibecheck-controller-backend"}
 
 def test_simulator_ingestion_and_state():
     # Initial state should be empty

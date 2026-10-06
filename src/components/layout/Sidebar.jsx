@@ -38,7 +38,7 @@ export default function Sidebar({ role, mobile = false }) {
             </div>
             <div className="min-w-0 leading-tight">
               <p className="text-[14.5px] font-semibold tracking-wide text-ink truncate">
-                Pulse Command
+                Vibecheck Controller
               </p>
             </div>
           </div>

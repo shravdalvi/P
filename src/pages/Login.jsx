@@ -60,7 +60,7 @@ export default function Login({ onLogin }) {
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span className="font-display font-bold text-[15px] tracking-wider text-ink uppercase">
-                Pulse Command
+                Vibecheck Controller
               </span>
               <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block" />
             </div>

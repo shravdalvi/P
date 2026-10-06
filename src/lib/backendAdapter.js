@@ -1,5 +1,5 @@
 /**
- * Backend Adapter for Pulse Command
+ * Backend Adapter for Vibecheck Controller
  *
  * Handles the seam between the frontend and the FastAPI backend.
  * Provides WebSocket connection management and a method for the local

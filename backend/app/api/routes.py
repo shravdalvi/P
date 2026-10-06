@@ -7,7 +7,7 @@ router = APIRouter()
 
 @router.get("/health")
 async def health_check():
-    return {"status": "ok", "service": "pulse-command-backend"}
+    return {"status": "ok", "service": "vibecheck-controller-backend"}
 
 @router.get("/api/event")
 async def get_event():
