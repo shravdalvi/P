@@ -1,14 +1,108 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { backendAdapter } from '../lib/backendAdapter';
-import { computeIntelligence } from '../lib/crowdEngine.js';
+import { firebaseEnabled, subscribeZones, writeZones, seedInitialZones } from '../lib/firebase.js';
+
+function zoneSnapshot(zone) {
+  return {
+    count: zone.count,
+    ratio: zone.ratio,
+    incoming: zone.incoming,
+    outgoing: zone.outgoing,
+    netFlow: zone.netFlow,
+    risk: zone.risk,
+    status: zone.status,
+    capacity: zone.capacity,
+    name: zone.name,
+    prediction: zone.prediction
+      ? JSON.stringify(zone.prediction)
+      : null,
+    geometry: zone.geometry
+      ? JSON.stringify(zone.geometry)
+      : null
+  }
+}
 
 export function useBackendSync(localEngine) {
   const [backendZoneOverrides, setBackendZoneOverrides] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
+
   const bufferRef = useRef([]);
   const activeRecsRef = useRef(new Map());
 
+  // Firebase Refs
+  const lastWrittenZonesRef = useRef(new Map());
+  const hasSeededRef = useRef(false);
+  const initialZonesRef = useRef(localEngine.zones);
+
+  // FIREBASE SYNC
   useEffect(() => {
+    if (!firebaseEnabled) return;
+
+    let mounted = true;
+    let unsubscribe = null;
+
+    const init = async () => {
+      try {
+        const unsub = await subscribeZones((zones) => {
+          if (!mounted) return;
+          setIsConnected(true);
+
+          if (zones.length === 0 && !hasSeededRef.current) {
+            hasSeededRef.current = true;
+            seedInitialZones(initialZonesRef.current).catch(err => console.warn("Seed error:", err.message));
+          } else if (zones.length > 0) {
+            hasSeededRef.current = true;
+            const overrides = {};
+            for (const z of zones) {
+               overrides[z.id] = z;
+            }
+            setBackendZoneOverrides(overrides);
+          }
+        }, (err) => {
+          console.warn("Firestore subscription error:", err.message);
+        });
+
+        if (mounted) {
+           unsubscribe = unsub;
+        } else {
+           unsub();
+        }
+      } catch (err) {
+        console.warn("Firebase init error:", err.message);
+      }
+    };
+    init();
+
+    return () => {
+      mounted = false;
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
+
+  // LOCAL SIMULATOR TO FIRESTORE WRITE
+  useEffect(() => {
+    if (!firebaseEnabled || !hasSeededRef.current) return;
+
+    const toWrite = [];
+    for (const lz of localEngine.zones) {
+      const last = lastWrittenZonesRef.current.get(lz.id);
+      const currentSnapshot = zoneSnapshot(lz);
+
+      if (!last || JSON.stringify(last) !== JSON.stringify(currentSnapshot)) {
+        toWrite.push(lz);
+        lastWrittenZonesRef.current.set(lz.id, currentSnapshot);
+      }
+    }
+
+    if (toWrite.length > 0) {
+      writeZones(toWrite).catch(err => console.warn("Firestore write error:", err.message));
+    }
+  }, [localEngine.zones]);
+
+  // FASTAPI WEBSOCKET SYNC (Preserved for when Firebase is disabled)
+  useEffect(() => {
+    if (firebaseEnabled) return;
+
     let mounted = true;
     let hydrating = false;
 
@@ -23,9 +117,8 @@ export function useBackendSync(localEngine) {
           overrides[z.id] = z;
         }
 
-        // Apply any events that arrived while we were fetching initial state
         const buffer = bufferRef.current;
-        bufferRef.current = []; // clear buffer
+        bufferRef.current = [];
 
         for (const { entityId, data: eventData } of buffer) {
           if (overrides[entityId]) {
@@ -53,7 +146,6 @@ export function useBackendSync(localEngine) {
     const unsubZone = backendAdapter.subscribe('zone.updated', ({ entityId, data }) => {
       setBackendZoneOverrides(prev => {
         if (!prev) {
-          // If we haven't hydrated yet but we are connected, buffer the event
           bufferRef.current.push({ entityId, data });
           return prev;
         }
@@ -91,8 +183,8 @@ export function useBackendSync(localEngine) {
       return {
         ...localZone,
         ...overrides,
-        count: overrides.occupancy ?? localZone.count,
-        ratio: overrides.occupancyPercentage ?? localZone.ratio
+        count: overrides.occupancy ?? overrides.count ?? localZone.count,
+        ratio: overrides.occupancyPercentage ?? overrides.ratio ?? localZone.ratio
       };
     });
   }, [localEngine.zones, backendZoneOverrides]);
@@ -115,30 +207,10 @@ export function useBackendSync(localEngine) {
     };
   }
 
-
-  const intel = useMemo(() => {
-    if (!backendZoneOverrides) return { aiPrediction: localEngine.aiPrediction, contingencyTarget: localEngine.contingencyTarget, recommendations: localEngine.recommendations };
-    // Compute derived intelligence from merged zones to properly handle WebSocket updates
-    const computed = computeIntelligence(mergedZones, activeRecsRef.current);
-    activeRecsRef.current = computed.recommendationsMap;
-    // Map over localEngine recommendations to preserve 'approved'/'dismissed' states from local actions,
-    // while appending any new pending ones from computed.
-    const finalRecs = computed.recommendations.map(cr => {
-       const existing = localEngine.recommendations.find(lr => lr.id === cr.id);
-       if (existing && existing.status !== 'pending') return existing;
-       return cr;
-    });
-    return { aiPrediction: computed.aiPrediction, contingencyTarget: computed.contingencyTarget, recommendations: finalRecs };
-  }, [mergedZones, backendZoneOverrides, localEngine.aiPrediction, localEngine.recommendations]);
-
   return {
     ...localEngine,
     zones: mergedZones,
     kpis: mergedKpis,
-    aiPrediction: intel.aiPrediction,
-    contingencyTarget: intel.contingencyTarget,
-    recommendations: intel.recommendations,
     isBackendSynced: isConnected && backendZoneOverrides !== null
   };
-
 }

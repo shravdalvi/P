@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Activity, Mail, Lock, ShieldCheck, ArrowRight, Radio } from 'lucide-react'
 import { EVENT } from '../data/mockData.js'
+import { firebaseEnabled, signIn } from '../lib/firebase.js'
 
 const ROLES = [
   { id: 'admin', label: 'Event Admin', email: 'admin@pulsecommand.io' },
@@ -14,14 +15,38 @@ export default function Login({ onLogin }) {
   const [roleId, setRoleId] = useState('admin')
   const [email, setEmail] = useState('admin@pulsecommand.io')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState(null)
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    setError(null)
     const role = ROLES.find((r) => r.id === roleId)
     if (!role) return
 
-    onLogin(role)
-    navigate('/dashboard')
+    if (firebaseEnabled) {
+      setLoading(true)
+      try {
+        await signIn(email, password)
+        onLogin(role)
+        navigate('/dashboard')
+      } catch (err) {
+        if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+          setError('Invalid credentials.')
+        } else if (err.code === 'auth/too-many-requests') {
+          setError('Too many attempts. Please try again later.')
+        } else if (err.code === 'auth/network-request-failed') {
+          setError('Network failure. Check your connection.')
+        } else {
+          setError('Authentication failed: ' + err.message)
+        }
+      } finally {
+        setLoading(false)
+      }
+    } else {
+      onLogin(role)
+      navigate('/dashboard')
+    }
   }
 
   return (
@@ -80,6 +105,13 @@ export default function Login({ onLogin }) {
           </div>
         </div>
 
+        {/* ── Error Banner ──────────────────────────────────────────────── */}
+        {error && (
+          <div className="mb-4 px-3 py-2 rounded-[4px] bg-status-danger/10 border border-status-danger/20 text-status-danger text-[12px]">
+            {error}
+          </div>
+        )}
+
         {/* ── Login Form ────────────────────────────────────────────────── */}
         <form onSubmit={handleSubmit} className="space-y-3.5">
           <div>
@@ -107,18 +139,20 @@ export default function Login({ onLogin }) {
               <input
                 type="password"
                 value={password}
-                placeholder="Demo mode — any password"
+                placeholder={firebaseEnabled ? "Password required" : "Demo mode — any password"}
                 onChange={(e) => setPassword(e.target.value)}
                 className="bg-transparent outline-none text-[13px] text-ink w-full placeholder:text-ink-faint"
+                required={firebaseEnabled}
               />
             </div>
           </div>
 
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-surface-base font-semibold text-[13.5px] py-2.5 rounded-[6px] transition-colors mt-4"
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover disabled:opacity-50 text-surface-base font-semibold text-[13.5px] py-2.5 rounded-[6px] transition-colors mt-4"
           >
-            Enter Command Center <ArrowRight size={15} />
+            {loading ? 'Authenticating...' : 'Enter Command Center'} <ArrowRight size={15} />
           </button>
         </form>
 
@@ -128,7 +162,7 @@ export default function Login({ onLogin }) {
             <ShieldCheck size={13} className="text-status-safe" />
             <span>Role-Gated Access</span>
           </div>
-          <span className="font-mono">Local Engine v1.0</span>
+          <span className="font-mono">{firebaseEnabled ? 'Firebase Auth' : 'Local Engine v1.0'}</span>
         </div>
       </div>
     </div>

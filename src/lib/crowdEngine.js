@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { firebaseEnabled } from "./firebase.js"
 import { backendAdapter } from './backendAdapter.js'
 import {
   ZONES,
@@ -274,7 +275,9 @@ export function useCrowdEngine() {
   const [tick, setTick] = useState(0)
 
   useEffect(() => {
-    backendAdapter.connect();
+    if (!firebaseEnabled) {
+      backendAdapter.connect();
+    }
     // Use an empty subscribe to just satisfy any dependency
     const unsubscribe = backendAdapter.subscribe('zone.updated', () => {});
     return () => unsubscribe();
@@ -362,7 +365,9 @@ export function useCrowdEngine() {
         const intel = computeIntelligence(nextZones, activeRecsRef.current);
         activeRecsRef.current = intel.recommendationsMap;
         setRecommendations(intel.recommendations);
-        backendAdapter.ingestSimulatorData(nextZones);
+        if (!firebaseEnabled) {
+          backendAdapter.ingestSimulatorData(nextZones);
+        }
 
         return nextZones;
       })
