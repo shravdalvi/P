@@ -11,7 +11,7 @@ html, body, #root {
 }
 
 body {
-  @apply bg-surface-base text-ink font-body antialiased;
+  @apply bg-slate-50 text-slate-900 font-body antialiased;
   background-color: #F8FAFC;
   color: #0F172A;
 }
@@ -41,7 +41,7 @@ body {
   }
 
   .panel {
-    @apply bg-surface-panel border border-border-default rounded-[6px] shadow-none;
+    @apply bg-white border border-slate-200 rounded-[6px] shadow-none;
   }
 
   .status-dot {

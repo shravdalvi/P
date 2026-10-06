@@ -24,20 +24,20 @@ export default function AlertsPage() {
   return (
     <div className="p-4 lg:p-6 max-w-5xl mx-auto space-y-5">
       {/* ── Header & Filter Bar ─────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 pb-2 border-b border-border-default">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 pb-2 border-b border-slate-200">
         <div>
-          <p className="text-[10.5px] uppercase font-mono tracking-widest text-ink-faint">
+          <p className="text-[10.5px]  font-mono  text-slate-400">
             INCIDENT MANAGEMENT
           </p>
           <div className="flex items-center gap-2.5 mt-1">
-            <h1 className="font-display font-bold text-2xl text-ink">Operational Alerts Queue</h1>
-            <span className="font-mono text-[11px] px-2 py-0.5 rounded-[4px] bg-status-critical/15 text-status-critical border border-status-critical/30">
+            <h1 className="font-display font-bold text-2xl text-slate-900">Operational Alerts Queue</h1>
+            <span className="font-mono text-[11px] px-2 py-0.5 rounded-[4px] bg-red-50 text-red-600 border border-red-200">
               {alerts.filter((a) => a.status !== 'resolved').length} Active
             </span>
           </div>
         </div>
 
-        <div className="flex gap-1 p-1 rounded-[6px] bg-surface-panel border border-border-default">
+        <div className="flex gap-1 p-1 rounded-[6px] bg-white border border-slate-200">
           {filters.map((filter) => (
             <button
               key={filter}
@@ -45,8 +45,8 @@ export default function AlertsPage() {
               onClick={() => setActiveFilter(filter)}
               className={`px-3 py-1 rounded-[4px] text-[11.5px] font-mono transition-colors ${
                 activeFilter === filter
-                  ? 'bg-accent text-surface-base font-semibold'
-                  : 'text-ink-dim hover:text-ink'
+                  ? 'bg-teal-600 text-surface-base font-semibold'
+                  : 'text-slate-500 hover:text-slate-900'
               }`}
             >
               {filter}
@@ -58,9 +58,9 @@ export default function AlertsPage() {
       {/* ── Alerts Feed ─────────────────────────────────────────────────── */}
       {visibleAlerts.length === 0 ? (
         <div className="panel p-10 flex flex-col items-center justify-center text-center">
-          <CheckCheck size={28} className="text-status-safe mb-2" />
-          <p className="text-sm text-ink font-medium">No alerts matching filter</p>
-          <p className="text-[12px] text-ink-faint mt-0.5">All event sectors are operating within normal parameters.</p>
+          <CheckCheck size={28} className="text-teal-600 mb-2" />
+          <p className="text-sm text-slate-900 font-medium">No alerts matching filter</p>
+          <p className="text-[12px] text-slate-400 mt-0.5">All event sectors are operating within normal parameters.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -74,8 +74,8 @@ export default function AlertsPage() {
                 key={alert.id}
                 className={`panel p-4 transition-all ${
                   alert.severity === 'critical' && !isResolved
-                    ? 'border-status-critical/40 bg-surface-panel shadow-[0_0_12px_rgba(225,89,69,0.06)]'
-                    : 'border-border-default'
+                    ? 'border-red-200 bg-white '
+                    : 'border-slate-200'
                 }`}
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
@@ -86,21 +86,21 @@ export default function AlertsPage() {
 
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`text-[10px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-[3px] ${style.soft} ${style.text} border ${style.border}`}>
+                        <span className={`text-[10px] font-mono font-bold  px-1.5 py-0.5 rounded-[3px] ${style.soft} ${style.text} border ${style.border}`}>
                           {alert.severity}
                         </span>
-                        <span className="font-mono text-[11px] text-ink-faint">{alert.id}</span>
-                        <span className="text-[11px] text-ink-faint font-mono">· {alert.time}</span>
+                        <span className="font-mono text-[11px] text-slate-400">{alert.id}</span>
+                        <span className="text-[11px] text-slate-400 font-mono">· {alert.time}</span>
                       </div>
 
-                      <p className="font-medium text-sm text-ink mt-1.5 leading-snug">
+                      <p className="font-medium text-sm text-slate-900 mt-1.5 leading-snug">
                         {alert.description}
                       </p>
-                      <p className="text-[12px] text-accent mt-1">
+                      <p className="text-[12px] text-teal-600 mt-1">
                         Recommended: {alert.action}
                       </p>
-                      <p className="text-[11px] text-ink-faint font-mono mt-1">
-                        Affected Sector: <span className="text-ink-dim">{alert.zone}</span>
+                      <p className="text-[11px] text-slate-400 font-mono mt-1">
+                        Affected Sector: <span className="text-slate-500">{alert.zone}</span>
                       </p>
                     </div>
                   </div>
@@ -110,13 +110,13 @@ export default function AlertsPage() {
                       <>
                         <button
                           onClick={() => engine?.acknowledgeAlert(alert.id)}
-                          className="px-2.5 py-1 text-[11.5px] font-mono rounded-[4px] border border-border-default bg-surface-raised text-ink-dim hover:text-ink hover:border-accent transition-colors"
+                          className="px-2.5 py-1 text-[11.5px] font-mono rounded-[4px] border border-slate-200 bg-slate-50 text-slate-500 hover:text-slate-900 hover:border-teal-600 transition-colors"
                         >
                           Acknowledge
                         </button>
                         <button
                           onClick={() => engine?.resolveAlert(alert.id)}
-                          className="px-2.5 py-1 text-[11.5px] font-mono rounded-[4px] bg-status-safe/15 border border-status-safe/30 text-status-safe hover:bg-status-safe/25 transition-colors flex items-center gap-1"
+                          className="px-2.5 py-1 text-[11.5px] font-mono rounded-[4px] bg-teal-50 border border-teal-200 text-teal-600 hover:bg-teal-100 transition-colors flex items-center gap-1"
                         >
                           <Check size={12} /> Resolve
                         </button>
@@ -125,12 +125,12 @@ export default function AlertsPage() {
 
                     {alert.status === 'acknowledged' && (
                       <>
-                        <span className="text-[11px] font-mono text-status-moderate px-2 py-0.5 rounded bg-status-moderate/10 border border-status-moderate/30">
+                        <span className="text-[11px] font-mono text-amber-500 px-2 py-0.5 rounded bg-amber-50 border border-amber-200">
                           Acknowledged
                         </span>
                         <button
                           onClick={() => engine?.resolveAlert(alert.id)}
-                          className="px-2.5 py-1 text-[11.5px] font-mono rounded-[4px] bg-status-safe/15 border border-status-safe/30 text-status-safe hover:bg-status-safe/25 transition-colors"
+                          className="px-2.5 py-1 text-[11.5px] font-mono rounded-[4px] bg-teal-50 border border-teal-200 text-teal-600 hover:bg-teal-100 transition-colors"
                         >
                           Resolve
                         </button>
@@ -138,7 +138,7 @@ export default function AlertsPage() {
                     )}
 
                     {alert.status === 'resolved' && (
-                      <span className="text-[11px] font-mono text-ink-faint px-2 py-0.5 rounded bg-surface-raised border border-border-muted">
+                      <span className="text-[11px] font-mono text-slate-400 px-2 py-0.5 rounded bg-slate-50 border border-slate-200">
                         Resolved
                       </span>
                     )}

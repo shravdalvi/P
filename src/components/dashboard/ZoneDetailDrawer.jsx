@@ -14,7 +14,7 @@ export default function ZoneDetailDrawer({ zone, onClose }) {
             <p className="font-display font-semibold text-[15px]">{zone.name}</p>
             <span className={`text-[11px] font-medium ${style.text}`}>{style.label}</span>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-base-panel text-ink-dim">
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-base-panel text-slate-500">
             <X size={18} />
           </button>
         </div>
@@ -23,12 +23,12 @@ export default function ZoneDetailDrawer({ zone, onClose }) {
           <div className={`rounded-xl border ${style.border} ${style.soft} p-4`}>
             <div className="flex items-end justify-between">
               <div>
-                <p className="text-[11px] text-ink-faint mb-1">Current population</p>
+                <p className="text-[11px] text-slate-400 mb-1">Current population</p>
                 <p className="font-data text-2xl font-semibold">{zone.count.toLocaleString()}</p>
               </div>
               <div className="text-right">
-                <p className="text-[11px] text-ink-faint mb-1">Capacity</p>
-                <p className="font-data text-[15px] text-ink-dim">{zone.capacity.toLocaleString()}</p>
+                <p className="text-[11px] text-slate-400 mb-1">Capacity</p>
+                <p className="font-data text-[15px] text-slate-500">{zone.capacity.toLocaleString()}</p>
               </div>
             </div>
             <div className="mt-3 h-2 rounded-full bg-base-panel overflow-hidden">
@@ -49,31 +49,31 @@ export default function ZoneDetailDrawer({ zone, onClose }) {
           </div>
 
           <div>
-            <p className="text-[11px] text-ink-faint mb-1 flex items-center gap-1.5">
+            <p className="text-[11px] text-slate-400 mb-1 flex items-center gap-1.5">
               <Clock size={12} /> Average dwell time
             </p>
-            <p className="text-[14px] text-ink">{zone.dwell} minutes</p>
+            <p className="text-[14px] text-slate-900">{zone.dwell} minutes</p>
           </div>
 
           <div className="rounded-xl border border-base-hair bg-base-panel p-4">
-            <p className="text-[12px] font-medium text-ink mb-3">Prediction</p>
+            <p className="text-[12px] font-medium text-slate-900 mb-3">Prediction</p>
             <div className="space-y-2">
               {zone.prediction.projections.map((p) => (
                 <div key={p.min} className="flex items-center justify-between text-[13px]">
-                  <span className="text-ink-faint">In {p.min} minutes</span>
-                  <span className="font-data text-ink">{p.value.toLocaleString()}</span>
+                  <span className="text-slate-400">In {p.min} minutes</span>
+                  <span className="font-data text-slate-900">{p.value.toLocaleString()}</span>
                 </div>
               ))}
             </div>
             {zone.prediction.breachIn ? (
               <div className="mt-3 pt-3 border-t border-base-hair">
-                <p className="text-[12.5px] text-status-critical font-medium">
+                <p className="text-[12.5px] text-red-600 font-medium">
                   Capacity breach expected in approx. {zone.prediction.breachIn} minutes
                 </p>
               </div>
             ) : (
               <div className="mt-3 pt-3 border-t border-base-hair">
-                <p className="text-[12.5px] text-status-safe font-medium">No breach expected on current trend</p>
+                <p className="text-[12.5px] text-teal-600 font-medium">No breach expected on current trend</p>
               </div>
             )}
           </div>
@@ -84,12 +84,12 @@ export default function ZoneDetailDrawer({ zone, onClose }) {
 }
 
 function MiniStat({ icon: Icon, label, value, tone }) {
-  const toneClass = { safe: 'text-status-safe', info: 'text-status-info', critical: 'text-status-critical' }[tone]
+  const toneClass = { safe: 'text-teal-600', info: 'text-status-info', critical: 'text-red-600' }[tone]
   return (
     <div className="rounded-lg border border-base-hair bg-base-panel p-3">
       <Icon size={14} className={toneClass} />
-      <p className="text-[10.5px] text-ink-faint mt-1.5">{label}</p>
-      <p className="font-data text-[13px] text-ink mt-0.5">{value}</p>
+      <p className="text-[10.5px] text-slate-400 mt-1.5">{label}</p>
+      <p className="font-data text-[13px] text-slate-900 mt-0.5">{value}</p>
     </div>
   )
 }

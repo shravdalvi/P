@@ -282,18 +282,18 @@ export default function ZonesPage() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-surface-base text-ink p-6 gap-6 overflow-y-auto">
+    <div className="flex flex-col h-full bg-slate-100 text-slate-900 p-6 gap-6 overflow-y-auto">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-display font-bold">Zones Administration</h1>
-          <p className="text-ink-dim text-sm mt-1">Manage event sector capacities and live telemetry</p>
+          <p className="text-slate-500 text-sm mt-1">Manage event sector capacities and live telemetry</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex bg-surface-raised border border-border-default rounded-md p-1">
-             <button onClick={() => setActiveTab('overview')} className={`px-4 py-1.5 text-sm font-semibold rounded-sm transition-colors flex items-center gap-2 ${activeTab === 'overview' ? 'bg-surface-panel shadow-sm text-ink' : 'text-ink-dim hover:text-ink'}`}>
+          <div className="flex bg-slate-50 border border-slate-200 rounded-md p-1">
+             <button onClick={() => setActiveTab('overview')} className={`px-4 py-1.5 text-sm font-semibold rounded-sm transition-colors flex items-center gap-2 ${activeTab === 'overview' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-900'}`}>
                 <List size={16} /> Overview
              </button>
-             <button onClick={() => setActiveTab('layout')} className={`px-4 py-1.5 text-sm font-semibold rounded-sm transition-colors flex items-center gap-2 ${activeTab === 'layout' ? 'bg-surface-panel shadow-sm text-ink' : 'text-ink-dim hover:text-ink'}`}>
+             <button onClick={() => setActiveTab('layout')} className={`px-4 py-1.5 text-sm font-semibold rounded-sm transition-colors flex items-center gap-2 ${activeTab === 'layout' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-900'}`}>
                 <MapIcon size={16} /> Event Layout
              </button>
           </div>
@@ -306,19 +306,19 @@ export default function ZonesPage() {
         <div className="xl:col-span-2 flex flex-col gap-4">
           <div className="flex justify-end">
             <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-dim" />
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
               <input
                 type="text"
                 placeholder="Search zones..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 pr-4 py-2 bg-surface-panel border border-border-default rounded-md text-sm focus:outline-none focus:border-accent w-64"
+                className="pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-md text-sm focus:outline-none focus:border-teal-600 w-64"
               />
             </div>
           </div>
-          <div className="bg-surface-panel border border-border-default rounded-md shadow-sm overflow-hidden">
+          <div className="bg-white border border-slate-200 rounded-md shadow-sm overflow-hidden">
             <table className="w-full text-left text-sm">
-              <thead className="bg-surface-raised border-b border-border-default text-ink-dim">
+              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500">
                 <tr>
                   <th className="px-4 py-3 font-semibold">Zone Name</th>
                   <th className="px-4 py-3 font-semibold">Status</th>
@@ -332,21 +332,21 @@ export default function ZonesPage() {
                 {filteredZones.map(z => {
                   const ratio = (z.occupancyPercentage ?? z.ratio)
                   return (
-                    <tr key={z.id} className="border-b border-border-muted/30 hover:bg-surface-raised transition-colors">
+                    <tr key={z.id} className="border-b border-slate-200/30 hover:bg-slate-50 transition-colors">
                       <td className="px-4 py-3 font-medium">{z.name}</td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${z.status === 'OFF-LIMIT' ? 'bg-status-critical/10 text-status-critical' : 'bg-status-safe/10 text-status-safe'}`}>
+                        <span className={`px-2 py-1 rounded text-[10px] font-bold  ${z.status === 'OFF-LIMIT' ? 'bg-red-50 text-red-600' : 'bg-teal-50 text-teal-600'}`}>
                           {z.status}
                         </span>
                       </td>
                       <td className="px-4 py-3 font-data text-right">{(z.occupancy ?? z.count).toLocaleString()}</td>
-                      <td className="px-4 py-3 font-data text-right text-ink-dim">{z.capacity.toLocaleString()}</td>
+                      <td className="px-4 py-3 font-data text-right text-slate-500">{z.capacity.toLocaleString()}</td>
                       <td className="px-4 py-3 text-right">
-                        <span className={`font-data ${ratio > 0.85 ? 'text-status-critical' : ratio > 0.7 ? 'text-status-moderate' : 'text-status-safe'}`}>
+                        <span className={`font-data ${ratio > 0.85 ? 'text-red-600' : ratio > 0.7 ? 'text-amber-500' : 'text-teal-600'}`}>
                           {Math.round(ratio * 100)}%
                         </span>
                       </td>
-                      <td className="px-4 py-3 font-data text-right text-ink-dim">{z.netFlow > 0 ? '+' : ''}{z.netFlow}/m</td>
+                      <td className="px-4 py-3 font-data text-right text-slate-500">{z.netFlow > 0 ? '+' : ''}{z.netFlow}/m</td>
                     </tr>
                   )
                 })}
@@ -357,8 +357,8 @@ export default function ZonesPage() {
 
         {/* Right: Analytics */}
         <div className="xl:col-span-1 flex flex-col gap-6">
-          <div className="bg-surface-panel border border-border-default rounded-md shadow-sm p-5 flex flex-col h-[300px]">
-             <h3 className="text-sm font-semibold mb-4 flex items-center gap-2"><Gauge size={16} className="text-accent"/> Global Capacity Pressure</h3>
+          <div className="bg-white border border-slate-200 rounded-md shadow-sm p-5 flex flex-col h-[300px]">
+             <h3 className="text-sm font-semibold mb-4 flex items-center gap-2"><Gauge size={16} className="text-teal-600"/> Global Capacity Pressure</h3>
              <div className="flex-1 min-h-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={filteredZones.slice(0, 10).map(z => ({ name: z.name.split('·')[0].trim().replace('Zone ', 'Z'), ratio: (z.occupancyPercentage ?? z.ratio) * 100 }))} layout="vertical" margin={{ top: 0, right: 20, left: 0, bottom: 0 }}>
@@ -379,10 +379,10 @@ export default function ZonesPage() {
       </div>
       ) : (
       <div className="flex-1 flex gap-4 min-h-0">
-         <div className="w-80 bg-surface-panel border border-border-default rounded-md flex flex-col p-4 shadow-sm">
+         <div className="w-80 bg-white border border-slate-200 rounded-md flex flex-col p-4 shadow-sm">
             <div className="flex items-center justify-between mb-6">
                <h3 className="font-semibold text-sm">Event Configuration</h3>
-               {!isAdding && <button onClick={() => setIsAdding(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-accent text-white rounded text-xs font-semibold hover:bg-accent-hover transition-colors"><Plus size={14}/> ADD ZONE</button>}
+               {!isAdding && <button onClick={() => setIsAdding(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 text-white rounded text-xs font-semibold hover:bg-teal-600-hover transition-colors"><Plus size={14}/> ADD ZONE</button>}
             </div>
 
             {isAdding ? (
@@ -392,12 +392,12 @@ export default function ZonesPage() {
                      <span>{editZoneId ? 'Change properties below. To move it, click a new location on the map.' : 'Click on the map to place the zone anchor, then configure its properties below.'}</span>
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-ink-dim mb-1 block">Zone Name</label>
-                    <input type="text" value={newZone.name} onChange={e => setNewZone({...newZone, name: e.target.value})} className="w-full border border-border-default rounded px-3 py-1.5 text-sm" placeholder="e.g. VIP Plaza" />
+                    <label className="text-xs font-semibold text-slate-500 mb-1 block">Zone Name</label>
+                    <input type="text" value={newZone.name} onChange={e => setNewZone({...newZone, name: e.target.value})} className="w-full border border-slate-200 rounded px-3 py-1.5 text-sm" placeholder="e.g. VIP Plaza" />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-ink-dim mb-1 block">Type</label>
-                    <select value={newZone.type} onChange={e => setNewZone({...newZone, type: e.target.value})} className="w-full border border-border-default rounded px-3 py-1.5 text-sm mb-3">
+                    <label className="text-xs font-semibold text-slate-500 mb-1 block">Type</label>
+                    <select value={newZone.type} onChange={e => setNewZone({...newZone, type: e.target.value})} className="w-full border border-slate-200 rounded px-3 py-1.5 text-sm mb-3">
                        <option value="zone">Crowd Zone</option>
                        <option value="gate">Gate</option>
                        <option value="stage">Stage</option>
@@ -407,33 +407,33 @@ export default function ZonesPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-ink-dim mb-1 block">Capacity (Persons)</label>
-                    <input type="number" value={newZone.capacity} onChange={e => setNewZone({...newZone, capacity: e.target.value})} className="w-full border border-border-default rounded px-3 py-1.5 text-sm" />
+                    <label className="text-xs font-semibold text-slate-500 mb-1 block">Capacity (Persons)</label>
+                    <input type="number" value={newZone.capacity} onChange={e => setNewZone({...newZone, capacity: e.target.value})} className="w-full border border-slate-200 rounded px-3 py-1.5 text-sm" />
                   </div>
-                  <div className="bg-surface-raised p-3 rounded border border-border-default mt-2 text-xs text-ink-dim">
-                     <p className="font-semibold text-ink mb-1">Drawing Mode Active</p>
+                  <div className="bg-slate-50 p-3 rounded border border-slate-200 mt-2 text-xs text-slate-500">
+                     <p className="font-semibold text-slate-900 mb-1">Drawing Mode Active</p>
                      <p>Click on the map to drop points for the polygon footprint. At least 3 points required.</p>
-                     {drawingPoints.length > 0 && <button onClick={() => setDrawingPoints([])} className="mt-2 text-status-critical font-semibold">Clear Points ({drawingPoints.length})</button>}
+                     {drawingPoints.length > 0 && <button onClick={() => setDrawingPoints([])} className="mt-2 text-red-600 font-semibold">Clear Points ({drawingPoints.length})</button>}
                    </div>
 
-                  <div className="flex gap-2 mt-4 pt-4 border-t border-border-default">
-                     <button onClick={handleSaveZone} disabled={(!editZoneId && drawingPoints.length < 3) || !newZone.name} className="flex-1 bg-accent text-white rounded py-2 text-xs font-semibold disabled:opacity-50">{editZoneId ? 'UPDATE ZONE' : 'SAVE ZONE'}</button>
-                     <button onClick={() => { setIsAdding(false); setDrawingPoints([]); if (mapRef.current?.getSource('draw-preview')) mapRef.current.getSource('draw-preview').setData({ type: 'FeatureCollection', features: [] }); setEditZoneId(null); setNewZone({ name: '', capacity: 2000, type: 'General', radius: 0.1 }); }} className="flex-1 border border-border-default text-ink-dim hover:text-ink rounded py-2 text-xs font-semibold">CANCEL</button>
+                  <div className="flex gap-2 mt-4 pt-4 border-t border-slate-200">
+                     <button onClick={handleSaveZone} disabled={(!editZoneId && drawingPoints.length < 3) || !newZone.name} className="flex-1 bg-teal-600 text-white rounded py-2 text-xs font-semibold disabled:opacity-50">{editZoneId ? 'UPDATE ZONE' : 'SAVE ZONE'}</button>
+                     <button onClick={() => { setIsAdding(false); setDrawingPoints([]); if (mapRef.current?.getSource('draw-preview')) mapRef.current.getSource('draw-preview').setData({ type: 'FeatureCollection', features: [] }); setEditZoneId(null); setNewZone({ name: '', capacity: 2000, type: 'General', radius: 0.1 }); }} className="flex-1 border border-slate-200 text-slate-500 hover:text-slate-900 rounded py-2 text-xs font-semibold">CANCEL</button>
                   </div>
                </div>
             ) : (
                <div className="flex-1 overflow-y-auto">
-                  <span className="text-xs font-semibold text-ink-dim mb-2 block uppercase tracking-wider">Active Infrastructure</span>
+                  <span className="text-xs font-semibold text-slate-500 mb-2 block ">Active Infrastructure</span>
                   <div className="flex flex-col gap-2">
                     {engine.eventLayout.objects.map(z => (
-                       <div key={z.id} className="p-2 border border-border-default rounded bg-surface-raised flex flex-col gap-2">
+                       <div key={z.id} className="p-2 border border-slate-200 rounded bg-slate-50 flex flex-col gap-2">
                          <div className="flex items-center justify-between">
                            <span className="text-sm font-medium">{z.name}</span>
-                           <span className="text-xs font-mono text-ink-dim">{z.capacity} cap</span>
+                           <span className="text-xs font-mono text-slate-500">{z.capacity} cap</span>
                          </div>
                          <div className="flex gap-2">
-                           <button onClick={() => { setEditZoneId(z.id); setNewZone({ name: z.name, capacity: z.capacity, type: z.type || 'General', radius: 0.1 }); setIsAdding(true); }} className="text-[10px] uppercase font-bold text-ink-dim hover:text-accent">Edit</button>
-                           <button onClick={() => { if(confirm('Delete zone?')) engine.deleteZone(z.id); }} className="text-[10px] uppercase font-bold text-ink-dim hover:text-status-critical">Delete</button>
+                           <button onClick={() => { setEditZoneId(z.id); setNewZone({ name: z.name, capacity: z.capacity, type: z.type || 'General', radius: 0.1 }); setIsAdding(true); }} className="text-[10px]  font-bold text-slate-500 hover:text-teal-600">Edit</button>
+                           <button onClick={() => { if(confirm('Delete zone?')) engine.deleteZone(z.id); }} className="text-[10px]  font-bold text-slate-500 hover:text-red-600">Delete</button>
                          </div>
                        </div>
                     ))}
@@ -441,7 +441,7 @@ export default function ZonesPage() {
                </div>
             )}
          </div>
-         <div className="flex-1 bg-surface-panel border border-border-default rounded-md overflow-hidden relative shadow-sm">
+         <div className="flex-1 bg-white border border-slate-200 rounded-md overflow-hidden relative shadow-sm">
             <div ref={mapContainer} className="w-full h-full" />
          </div>
       </div>

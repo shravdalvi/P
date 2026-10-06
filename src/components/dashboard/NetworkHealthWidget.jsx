@@ -14,21 +14,21 @@ export default function NetworkHealthWidget({ network }) {
         <Row
           label="Gateways online"
           value={`${gatewaysOnline} / ${network.gatewaysTotal}`}
-          tone={network.gatewaysOffline.length > 0 ? 'text-status-moderate' : 'text-status-safe'}
+          tone={network.gatewaysOffline.length > 0 ? 'text-amber-500' : 'text-teal-600'}
         />
         <Row
           label="Data latency"
           value={`${network.latency}s`}
-          tone={Number(network.latency) > 2 ? 'text-status-high' : 'text-status-safe'}
+          tone={Number(network.latency) > 2 ? 'text-red-500' : 'text-teal-600'}
         />
         <Row
           label="Network health"
           value={`${network.health}%`}
-          tone={network.health < 85 ? 'text-status-moderate' : 'text-status-safe'}
+          tone={network.health < 85 ? 'text-amber-500' : 'text-teal-600'}
         />
       </div>
       {network.gatewaysOffline.length > 0 && (
-        <p className="mt-3 pt-3 border-t border-base-hair text-[10.5px] text-status-moderate">
+        <p className="mt-3 pt-3 border-t border-base-hair text-[10.5px] text-amber-500">
           Offline: {network.gatewaysOffline.join(', ')}
         </p>
       )}
@@ -36,10 +36,10 @@ export default function NetworkHealthWidget({ network }) {
   )
 }
 
-function Row({ label, value, tone = 'text-ink' }) {
+function Row({ label, value, tone = 'text-slate-900' }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-ink-faint">{label}</span>
+      <span className="text-slate-400">{label}</span>
       <span className={`font-data ${tone}`}>{value}</span>
     </div>
   )

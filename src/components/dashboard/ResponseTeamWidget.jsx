@@ -1,9 +1,9 @@
 import { Users } from 'lucide-react'
 
 const STATUS_DOT = {
-  active: 'bg-status-critical',
-  busy: 'bg-status-moderate',
-  available: 'bg-status-safe'
+  active: 'bg-red-600',
+  busy: 'bg-amber-500',
+  available: 'bg-teal-600'
 }
 
 export default function ResponseTeamWidget({ teams }) {
@@ -19,11 +19,11 @@ export default function ResponseTeamWidget({ teams }) {
             <div className="flex items-center gap-2 min-w-0">
               <span className={`status-dot ${STATUS_DOT[t.status]}`} />
               <div className="min-w-0">
-                <p className="text-[11.5px] text-ink-dim truncate">{t.name}</p>
-                <p className="text-[10.5px] text-ink-faint">{t.members} members · {t.zone}</p>
+                <p className="text-[11.5px] text-slate-500 truncate">{t.name}</p>
+                <p className="text-[10.5px] text-slate-400">{t.members} members · {t.zone}</p>
               </div>
             </div>
-            <span className="text-[10.5px] text-ink-faint capitalize shrink-0">{t.status}</span>
+            <span className="text-[10.5px] text-slate-400 capitalize shrink-0">{t.status}</span>
           </div>
         ))}
       </div>

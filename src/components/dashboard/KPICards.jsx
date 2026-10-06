@@ -2,22 +2,22 @@ import { Users, LayoutGrid, ShieldAlert, BellRing, Bus, BedDouble } from 'lucide
 
 function Card({ icon: Icon, label, value, suffix, tone = 'ink' }) {
   const toneClass = {
-    ink: 'text-ink',
-    safe: 'text-status-safe',
-    critical: 'text-status-critical',
-    brand: 'text-brand-300'
+    ink: 'text-slate-900',
+    safe: 'text-teal-600',
+    critical: 'text-red-600',
+    brand: 'text-teal-600'
   }[tone]
 
   return (
     <div className="panel px-4 py-3.5 flex items-center gap-3.5 min-w-0">
-      <div className="w-9 h-9 rounded-lg bg-base-panel border border-base-hair flex items-center justify-center shrink-0">
-        <Icon size={16} strokeWidth={1.8} className="text-ink-dim" />
+      <div className="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0">
+        <Icon size={16} strokeWidth={1.8} className="text-slate-500" />
       </div>
       <div className="min-w-0">
-        <p className="text-[11px] text-ink-faint truncate">{label}</p>
+        <p className="text-[11px] text-slate-400 truncate">{label}</p>
         <p className={`font-data text-[19px] font-semibold tabular-nums ${toneClass}`}>
           {value}
-          {suffix && <span className="text-[12px] text-ink-faint ml-0.5 font-body">{suffix}</span>}
+          {suffix && <span className="text-[12px] text-slate-400 ml-0.5 font-body">{suffix}</span>}
         </p>
       </div>
     </div>

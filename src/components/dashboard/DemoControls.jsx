@@ -9,11 +9,11 @@ const SCENARIOS = [
 export default function DemoControls({ running, scenario, setRunning, setDemoScenario, resetSimulation }) {
   return (
     <div className="panel px-4 py-3 flex flex-wrap items-center gap-2.5">
-      <span className="text-[11px] text-ink-faint mr-1">Simulation</span>
+      <span className="text-[11px] text-slate-400 mr-1">Simulation</span>
 
       <button
         onClick={() => setRunning(!running)}
-        className="flex items-center gap-1.5 text-[12px] px-2.5 py-1.5 rounded-md border border-base-hair text-ink-dim hover:text-ink hover:bg-base-panel transition-colors"
+        className="flex items-center gap-1.5 text-[12px] px-2.5 py-1.5 rounded-md border border-base-hair text-slate-500 hover:text-slate-900 hover:bg-base-panel transition-colors"
       >
         {running ? <Pause size={13} /> : <Play size={13} />}
         {running ? 'Pause' : 'Resume'}
@@ -21,7 +21,7 @@ export default function DemoControls({ running, scenario, setRunning, setDemoSce
 
       <button
         onClick={resetSimulation}
-        className="flex items-center gap-1.5 text-[12px] px-2.5 py-1.5 rounded-md border border-base-hair text-ink-dim hover:text-ink hover:bg-base-panel transition-colors"
+        className="flex items-center gap-1.5 text-[12px] px-2.5 py-1.5 rounded-md border border-base-hair text-slate-500 hover:text-slate-900 hover:bg-base-panel transition-colors"
       >
         <RotateCcw size={13} /> Reset
       </button>
@@ -35,7 +35,7 @@ export default function DemoControls({ running, scenario, setRunning, setDemoSce
           className={`flex items-center gap-1.5 text-[12px] px-2.5 py-1.5 rounded-md transition-colors ${
             scenario === s.key
               ? 'bg-brand-500/15 text-brand-300 border border-brand-500/30'
-              : 'border border-base-hair text-ink-dim hover:text-ink hover:bg-base-panel'
+              : 'border border-base-hair text-slate-500 hover:text-slate-900 hover:bg-base-panel'
           }`}
         >
           <s.icon size={13} />

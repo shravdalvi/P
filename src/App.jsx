@@ -82,7 +82,7 @@ export default function App() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-surface-base text-ink-faint text-sm font-mono uppercase">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500 text-sm font-mono ">
         Initializing Command Center...
       </div>
     )

@@ -26,63 +26,63 @@ export default function DevicesPage() {
   }
 
   return (
-    <div className="p-4 lg:p-6 max-w-6xl mx-auto space-y-6 bg-surface-base min-h-full">
-      <div className="pb-2 border-b border-border-default">
-        <h1 className="text-2xl font-display font-bold text-ink">Systems</h1>
-        <p className="text-sm text-ink-dim mt-1">Runtime state, data pipeline, and simulation controls</p>
+    <div className="p-4 lg:p-6 max-w-6xl mx-auto space-y-6 bg-slate-100 min-h-full">
+      <div className="pb-2 border-b border-slate-200">
+        <h1 className="text-2xl font-display font-bold text-slate-900">Systems</h1>
+        <p className="text-sm text-slate-500 mt-1">Runtime state, data pipeline, and simulation controls</p>
       </div>
 
       {/* System Status Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className={`bg-surface-panel rounded-md border p-4 ${isConnected ? 'border-status-safe/40' : 'border-status-moderate/40'}`}>
+        <div className={`bg-white rounded-md border p-4 ${isConnected ? 'border-teal-200' : 'border-amber-200'}`}>
           <div className="flex items-center gap-2 mb-2">
-            <Wifi size={16} className={isConnected ? 'text-status-safe' : 'text-status-moderate'} />
-            <span className="text-[10px] font-mono uppercase tracking-wider text-ink-faint">Backend</span>
+            <Wifi size={16} className={isConnected ? 'text-teal-600' : 'text-amber-500'} />
+            <span className="text-[10px] font-mono  text-slate-400">Backend</span>
           </div>
-          <div className={`text-sm font-bold ${isConnected ? 'text-status-safe' : 'text-status-moderate'}`}>
+          <div className={`text-sm font-bold ${isConnected ? 'text-teal-600' : 'text-amber-500'}`}>
             {isConnected ? 'CONNECTED' : 'LOCAL ONLY'}
           </div>
-          <div className="text-[11px] text-ink-faint mt-1">
+          <div className="text-[11px] text-slate-400 mt-1">
             {isConnected ? 'WebSocket active' : 'Simulator only mode'}
           </div>
         </div>
 
-        <div className={`bg-surface-panel rounded-md border p-4 ${running ? 'border-accent/40' : 'border-border-default'}`}>
+        <div className={`bg-white rounded-md border p-4 ${running ? 'border-teal-600/40' : 'border-slate-200'}`}>
           <div className="flex items-center gap-2 mb-2">
-            <Cpu size={16} className={running ? 'text-accent' : 'text-ink-dim'} />
-            <span className="text-[10px] font-mono uppercase tracking-wider text-ink-faint">Simulator</span>
+            <Cpu size={16} className={running ? 'text-teal-600' : 'text-slate-500'} />
+            <span className="text-[10px] font-mono  text-slate-400">Simulator</span>
           </div>
-          <div className={`text-sm font-bold ${running ? 'text-accent' : 'text-ink-dim'}`}>
+          <div className={`text-sm font-bold ${running ? 'text-teal-600' : 'text-slate-500'}`}>
             {running ? 'RUNNING' : 'PAUSED'}
           </div>
-          <div className="text-[11px] text-ink-faint mt-1">Tick interval: 3s</div>
+          <div className="text-[11px] text-slate-400 mt-1">Tick interval: 3s</div>
         </div>
 
-        <div className="bg-surface-panel rounded-md border border-border-default p-4">
+        <div className="bg-white rounded-md border border-slate-200 p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Database size={16} className="text-ink-dim" />
-            <span className="text-[10px] font-mono uppercase tracking-wider text-ink-faint">Zones</span>
+            <Database size={16} className="text-slate-500" />
+            <span className="text-[10px] font-mono  text-slate-400">Zones</span>
           </div>
-          <div className="text-sm font-bold text-ink">{activeZones} Active</div>
-          <div className="text-[11px] text-ink-faint mt-1">{criticalZones} OFF-LIMIT</div>
+          <div className="text-sm font-bold text-slate-900">{activeZones} Active</div>
+          <div className="text-[11px] text-slate-400 mt-1">{criticalZones} OFF-LIMIT</div>
         </div>
 
-        <div className="bg-surface-panel rounded-md border border-border-default p-4">
+        <div className="bg-white rounded-md border border-slate-200 p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Zap size={16} className={globalPressure > 80 ? 'text-status-critical' : 'text-status-safe'} />
-            <span className="text-[10px] font-mono uppercase tracking-wider text-ink-faint">Global Pressure</span>
+            <Zap size={16} className={globalPressure > 80 ? 'text-red-600' : 'text-teal-600'} />
+            <span className="text-[10px] font-mono  text-slate-400">Global Pressure</span>
           </div>
-          <div className={`text-sm font-bold ${globalPressure > 80 ? 'text-status-critical' : globalPressure > 65 ? 'text-status-moderate' : 'text-status-safe'}`}>
+          <div className={`text-sm font-bold ${globalPressure > 80 ? 'text-red-600' : globalPressure > 65 ? 'text-amber-500' : 'text-teal-600'}`}>
             {globalPressure}%
           </div>
-          <div className="text-[11px] text-ink-faint mt-1">{totalCrowd.toLocaleString()} / {totalCapacity.toLocaleString()}</div>
+          <div className="text-[11px] text-slate-400 mt-1">{totalCrowd.toLocaleString()} / {totalCapacity.toLocaleString()}</div>
         </div>
       </div>
 
       {/* Simulation Controls */}
-      <div className="bg-surface-panel border border-border-default rounded-md p-5">
+      <div className="bg-white border border-slate-200 rounded-md p-5">
         <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
-          <Cpu size={16} className="text-accent" /> Simulation Controls
+          <Cpu size={16} className="text-teal-600" /> Simulation Controls
         </h3>
 
         <div className="flex flex-wrap gap-3 mb-5">
@@ -90,8 +90,8 @@ export default function DevicesPage() {
             onClick={() => engine?.setRunning(!running)}
             className={`flex items-center gap-2 px-4 py-2 rounded text-sm font-semibold border transition-colors ${
               running
-                ? 'bg-status-moderate/10 border-status-moderate/40 text-status-moderate hover:bg-status-moderate/20'
-                : 'bg-status-safe/10 border-status-safe/40 text-status-safe hover:bg-status-safe/20'
+                ? 'bg-amber-50 border-amber-200 text-amber-500 hover:bg-amber-100'
+                : 'bg-teal-50 border-teal-200 text-teal-600 hover:bg-teal-100'
             }`}
           >
             {running ? <PauseCircle size={16} /> : <PlayCircle size={16} />}
@@ -99,14 +99,14 @@ export default function DevicesPage() {
           </button>
           <button
             onClick={() => engine?.resetSimulation?.()}
-            className="flex items-center gap-2 px-4 py-2 rounded text-sm font-semibold border border-border-default text-ink-dim hover:text-ink hover:border-border-muted transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded text-sm font-semibold border border-slate-200 text-slate-500 hover:text-slate-900 hover:border-slate-200 transition-colors"
           >
             <RotateCcw size={16} /> Reset Event
           </button>
         </div>
 
         <div>
-          <p className="text-[11px] font-mono uppercase tracking-wider text-ink-faint mb-3">Demo Scenario</p>
+          <p className="text-[11px] font-mono  text-slate-400 mb-3">Demo Scenario</p>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
             {Object.entries(SCENARIOS).map(([key, s]) => (
               <button
@@ -114,11 +114,11 @@ export default function DevicesPage() {
                 onClick={() => engine?.setScenario?.(key)}
                 className={`flex flex-col text-left p-3 rounded border text-xs transition-colors ${
                   scenario === key
-                    ? 'bg-accent/10 border-accent text-accent'
-                    : 'bg-surface-raised border-border-default text-ink-dim hover:text-ink hover:border-border-muted'
+                    ? 'bg-teal-50 border-teal-600 text-teal-600'
+                    : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-900 hover:border-slate-200'
                 }`}
               >
-                <span className="font-bold uppercase tracking-wide">{s.label}</span>
+                <span className="font-bold ">{s.label}</span>
                 <span className="text-[10px] mt-1 opacity-70 leading-snug">{s.desc}</span>
               </button>
             ))}
@@ -127,13 +127,13 @@ export default function DevicesPage() {
       </div>
 
       {/* Zone State Table */}
-      <div className="bg-surface-panel border border-border-default rounded-md overflow-hidden">
-        <div className="px-5 py-3 border-b border-border-default">
+      <div className="bg-white border border-slate-200 rounded-md overflow-hidden">
+        <div className="px-5 py-3 border-b border-slate-200">
           <h3 className="font-semibold text-sm">Live Zone Telemetry Snapshot</h3>
-          <p className="text-[11px] text-ink-faint mt-0.5">All values from the single canonical simulator state</p>
+          <p className="text-[11px] text-slate-400 mt-0.5">All values from the single canonical simulator state</p>
         </div>
         <table className="w-full text-left text-sm">
-          <thead className="bg-surface-raised border-b border-border-default text-ink-dim text-[11px] font-mono uppercase tracking-wider">
+          <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 text-[11px] font-mono ">
             <tr>
               <th className="px-4 py-2.5">Zone</th>
               <th className="px-4 py-2.5 text-right">Count</th>
@@ -148,22 +148,22 @@ export default function DevicesPage() {
             {zones.map(z => {
               const ratio = z.ratio ?? z.occupancyPercentage ?? 0
               return (
-                <tr key={z.id} className="border-b border-border-muted/30 hover:bg-surface-raised/50 transition-colors">
-                  <td className="px-4 py-2.5 font-medium text-ink">{z.name}</td>
+                <tr key={z.id} className="border-b border-slate-200/30 hover:bg-slate-50/50 transition-colors">
+                  <td className="px-4 py-2.5 font-medium text-slate-900">{z.name}</td>
                   <td className="px-4 py-2.5 font-data text-right">{(z.count ?? 0).toLocaleString()}</td>
-                  <td className="px-4 py-2.5 font-data text-right text-ink-dim">{(z.capacity ?? 0).toLocaleString()}</td>
+                  <td className="px-4 py-2.5 font-data text-right text-slate-500">{(z.capacity ?? 0).toLocaleString()}</td>
                   <td className="px-4 py-2.5 font-data text-right">
-                    <span className={ratio > 0.85 ? 'text-status-critical font-bold' : ratio > 0.7 ? 'text-status-moderate' : 'text-status-safe'}>
+                    <span className={ratio > 0.85 ? 'text-red-600 font-bold' : ratio > 0.7 ? 'text-amber-500' : 'text-teal-600'}>
                       {Math.round(ratio * 100)}%
                     </span>
                   </td>
-                  <td className="px-4 py-2.5 font-data text-right text-status-safe">{z.incoming ?? 0}</td>
-                  <td className="px-4 py-2.5 font-data text-right text-ink-dim">{z.outgoing ?? 0}</td>
+                  <td className="px-4 py-2.5 font-data text-right text-teal-600">{z.incoming ?? 0}</td>
+                  <td className="px-4 py-2.5 font-data text-right text-slate-500">{z.outgoing ?? 0}</td>
                   <td className="px-4 py-2.5 text-right">
-                    <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
-                      z.status === 'OFF-LIMIT' ? 'bg-status-critical/10 text-status-critical border border-status-critical/30' :
-                      z.risk === 'high' ? 'bg-status-high/10 text-status-high border border-status-high/30' :
-                      'bg-status-safe/10 text-status-safe border border-status-safe/30'
+                    <span className={`text-[10px] font-bold  px-2 py-0.5 rounded ${
+                      z.status === 'OFF-LIMIT' ? 'bg-red-50 text-red-600 border border-red-200' :
+                      z.risk === 'high' ? 'bg-red-50 text-red-500 border border-red-200' :
+                      'bg-teal-50 text-teal-600 border border-teal-200'
                     }`}>
                       {z.status === 'OFF-LIMIT' ? 'OFF-LIMIT' : z.risk}
                     </span>
@@ -176,35 +176,35 @@ export default function DevicesPage() {
       </div>
 
       {/* Data Pipeline Status */}
-      <div className="bg-surface-panel border border-border-default rounded-md p-5">
+      <div className="bg-white border border-slate-200 rounded-md p-5">
         <h3 className="font-semibold text-sm mb-4">Data Pipeline</h3>
         <div className="space-y-3">
           {[
             { label: 'Crowd Simulator', status: running ? 'active' : 'paused', detail: running ? `Tick every 3s · ${scenario} scenario` : 'Paused by operator' },
             { label: 'Zone Telemetry Engine', status: 'active', detail: `${zones.length} zones · ${zones.reduce((s, z) => s + (z.count ?? 0), 0).toLocaleString()} aggregate occupancy` },
-            { label: 'AI Intelligence Engine', status: 'active', detail: 'Prediction + Recommendation computed per tick' },
+            { label: 'Prediction Engine', status: 'active', detail: 'Prediction + Recommendation computed per tick' },
             { label: 'Backend WebSocket', status: isConnected ? 'active' : 'degraded', detail: isConnected ? 'Connected · zone.updated events streaming' : 'Not connected — running on local simulator' },
             { label: 'Alert Pipeline', status: alerts.length > 0 ? 'active' : 'idle', detail: `${alerts.filter(a => a.status !== 'resolved').length} active alerts · ${alerts.filter(a => a.status === 'resolved').length} resolved` },
           ].map(item => (
             <div key={item.label} className="flex items-start gap-3">
               {item.status === 'active' ? (
-                <CheckCircle2 size={16} className="text-status-safe mt-0.5 shrink-0" />
+                <CheckCircle2 size={16} className="text-teal-600 mt-0.5 shrink-0" />
               ) : item.status === 'paused' ? (
-                <AlertTriangle size={16} className="text-status-moderate mt-0.5 shrink-0" />
+                <AlertTriangle size={16} className="text-amber-500 mt-0.5 shrink-0" />
               ) : item.status === 'degraded' ? (
-                <XCircle size={16} className="text-status-moderate mt-0.5 shrink-0" />
+                <XCircle size={16} className="text-amber-500 mt-0.5 shrink-0" />
               ) : (
-                <CheckCircle2 size={16} className="text-ink-faint mt-0.5 shrink-0" />
+                <CheckCircle2 size={16} className="text-slate-400 mt-0.5 shrink-0" />
               )}
               <div className="flex-1">
-                <div className="text-sm font-semibold text-ink">{item.label}</div>
-                <div className="text-[11px] text-ink-faint">{item.detail}</div>
+                <div className="text-sm font-semibold text-slate-900">{item.label}</div>
+                <div className="text-[11px] text-slate-400">{item.detail}</div>
               </div>
-              <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${
-                item.status === 'active' ? 'text-status-safe border-status-safe/30 bg-status-safe/10' :
-                item.status === 'paused' ? 'text-status-moderate border-status-moderate/30 bg-status-moderate/10' :
-                item.status === 'degraded' ? 'text-status-moderate border-status-moderate/30 bg-status-moderate/10' :
-                'text-ink-faint border-border-default bg-surface-raised'
+              <span className={`text-[10px] font-bold  px-2 py-0.5 rounded border ${
+                item.status === 'active' ? 'text-teal-600 border-teal-200 bg-teal-50' :
+                item.status === 'paused' ? 'text-amber-500 border-amber-200 bg-amber-50' :
+                item.status === 'degraded' ? 'text-amber-500 border-amber-200 bg-amber-50' :
+                'text-slate-400 border-slate-200 bg-slate-50'
               }`}>
                 {item.status}
               </span>

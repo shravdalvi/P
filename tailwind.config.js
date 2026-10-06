@@ -4,11 +4,11 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        display: ['"Space Grotesk"', 'Inter', 'system-ui', 'sans-serif'],
+        display: ['Inter', 'system-ui', 'sans-serif'],
         body: ['Inter', 'system-ui', 'sans-serif'],
         data: ['"JetBrains Mono"', 'monospace']
       },
-            colors: {
+      colors: {
         'surface-base': '#F8FAFC',
         'surface-raised': '#F1F5F9',
         'surface-panel': '#FFFFFF',
@@ -52,19 +52,19 @@ export default {
           700: '#0F766E'
         },
         status: {
-          safe: '#10B981',      // Emerald 500 (Green = normal)
-          moderate: '#F59E0B',  // Amber 500 (Amber = attention)
-          high: '#F97316',      // Orange 500 (Orange = warning/high)
-          critical: '#EF4444',  // Red 500 (Red = critical/OFF-LIMIT)
+          safe: '#0D9488',      // Teal 600 (safe)
+          moderate: '#F59E0B',  // Amber 500
+          high: '#F97316',      // Orange 500
+          critical: '#DC2626',  // Red 600
           info: '#3B82F6',      // Blue 500
-          resolved: '#0D9488'   // Teal 600 (Teal = active/approved/monitoring)
+          resolved: '#0D9488'   // Teal 600
         }
       },
       boxShadow: {
-        panel: '0 1px 2px 0 rgba(0, 0, 0, 0.4)'
+        panel: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
       },
       backgroundImage: {
-        'grid-fade': 'radial-gradient(circle at 20% 0%, rgba(88, 166, 166, 0.08), transparent 45%)'
+        'grid-fade': 'none'
       }
     }
   },

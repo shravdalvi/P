@@ -11,12 +11,12 @@ export default function HospitalityWidget({ hospitality }) {
         {hospitality.map((h) => (
           <div key={h.id} className="flex items-center justify-between">
             <div className="min-w-0">
-              <p className="text-[11.5px] text-ink-dim truncate">{h.zone}</p>
-              <p className="text-[10.5px] text-ink-faint">{h.rooms} rooms · {h.distance}</p>
+              <p className="text-[11.5px] text-slate-500 truncate">{h.zone}</p>
+              <p className="text-[10.5px] text-slate-400">{h.rooms} rooms · {h.distance}</p>
             </div>
             <span
               className={`font-data text-[12px] shrink-0 ${
-                h.occupied >= 0.85 ? 'text-status-critical' : h.occupied >= 0.65 ? 'text-status-moderate' : 'text-status-safe'
+                h.occupied >= 0.85 ? 'text-red-600' : h.occupied >= 0.65 ? 'text-amber-500' : 'text-teal-600'
               }`}
             >
               {Math.round(h.occupied * 100)}%

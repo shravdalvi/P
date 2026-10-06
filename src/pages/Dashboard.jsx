@@ -7,17 +7,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, 
 
 import RecommendationPanel from '../components/dashboard/RecommendationPanel.jsx'
 import ZoneDetailDrawer from '../components/dashboard/ZoneDetailDrawer.jsx'
-import {
-  Users,
-  LayoutGrid,
-  ShieldAlert,
-  BellRing,
-  Radio,
-  TrendingUp,
-  ArrowRight,
-  Clock,
-  Activity
-} from 'lucide-react'
+import { Users, LayoutGrid, ShieldAlert, BellRing, Radio, TrendingUp, ArrowRight, Clock, Activity } from 'lucide-react'
 
 export default function Dashboard() {
   const engine = useOutletContext()
@@ -56,50 +46,50 @@ export default function Dashboard() {
       <div className="flex flex-col gap-3">
         {/* Row 1: Total Crowd + Tactical Prediction */}
         <div className="flex flex-col lg:flex-row lg:items-stretch gap-3">
-          <div className="bg-surface-panel p-4 rounded-[6px] border border-border-default flex items-center justify-between lg:w-72 shrink-0">
+          <div className="bg-white p-4 rounded-[6px] border border-slate-200 flex items-center justify-between lg:w-72 shrink-0">
             <div>
-              <span className="text-[11px] font-mono uppercase tracking-widest text-ink-faint block mb-1">
+              <span className="text-[11px] font-mono   text-slate-400 block mb-1">
                 Total Crowd
               </span>
-              <span className="font-data text-3xl font-bold text-ink leading-none">
+              <span className="font-data text-3xl font-bold text-slate-900 leading-none">
                 {engine?.kpis?.totalCrowd?.toLocaleString() ?? 0}
               </span>
             </div>
-            <Users size={32} className="text-accent opacity-20" />
+            <Users size={32} className="text-teal-600 opacity-20" />
           </div>
 
           {focusZone && (
-            <div className="bg-surface-panel p-4 rounded-[6px] border border-border-default flex-1 flex flex-col justify-center">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-ink-faint block mb-2.5">
-                Tactical Prediction Intelligence
+            <div className="bg-white p-4 rounded-[6px] border border-slate-200 flex-1 flex flex-col justify-center">
+              <span className="text-[10px] font-mono   text-slate-400 block mb-2.5">
+                Crowd outlook
               </span>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[11.5px]">
                 <div className="flex items-center gap-2">
-                  <TrendingUp size={14} className="text-status-critical shrink-0" />
+                  <TrendingUp size={14} className="text-red-600 shrink-0" />
                   <div>
-                    <span className="text-[9.5px] font-mono uppercase text-ink-faint block leading-tight">Rush Toward</span>
-                    <span className="font-bold text-status-critical truncate">{focusZone.name.split('·')[0].trim()}</span>
+                    <span className="text-[9.5px] font-mono  text-slate-400 block leading-tight">Rush Toward</span>
+                    <span className="font-bold text-red-600 truncate">{focusZone.name.split('·')[0].trim()}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <ArrowRight size={14} className="text-accent shrink-0" />
+                  <ArrowRight size={14} className="text-teal-600 shrink-0" />
                   <div>
-                    <span className="text-[9.5px] font-mono uppercase text-ink-faint block leading-tight">Divert To</span>
-                    <span className="font-bold text-accent truncate">{divertZone ? divertZone.name.split('·')[0].trim() : 'N/A'}</span>
+                    <span className="text-[9.5px] font-mono  text-slate-400 block leading-tight">Divert To</span>
+                    <span className="font-bold text-teal-600 truncate">{divertZone ? divertZone.name.split('·')[0].trim() : 'N/A'}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Clock size={14} className="text-status-moderate shrink-0" />
+                  <Clock size={14} className="text-amber-500 shrink-0" />
                   <div>
-                    <span className="text-[9.5px] font-mono uppercase text-ink-faint block leading-tight">Risk Window</span>
-                    <span className="font-mono font-bold text-status-moderate">{riskWindow}</span>
+                    <span className="text-[9.5px] font-mono  text-slate-400 block leading-tight">Risk Window</span>
+                    <span className="font-mono font-bold text-amber-500">{riskWindow}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-status-safe animate-pulse shrink-0" />
+                  <span className="w-2 h-2 rounded-full bg-teal-600  shrink-0" />
                   <div>
-                    <span className="text-[9.5px] font-mono uppercase text-ink-faint block leading-tight">Action Window</span>
-                    <span className="font-mono font-bold text-status-safe">{actionWindow}</span>
+                    <span className="text-[9.5px] font-mono  text-slate-400 block leading-tight">Action Window</span>
+                    <span className="font-mono font-bold text-teal-600">{actionWindow}</span>
                   </div>
                 </div>
               </div>
@@ -109,53 +99,53 @@ export default function Dashboard() {
 
         {/* Row 2: Secondary Operational Metrics */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 bg-surface-panel px-3 py-2 rounded-[6px] border border-border-default flex-1 min-w-[140px]">
-            <LayoutGrid size={14} className="text-ink-dim shrink-0" />
+          <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-[6px] border border-slate-200 flex-1 min-w-[140px]">
+            <LayoutGrid size={14} className="text-slate-500 shrink-0" />
             <div>
-              <span className="text-[9.5px] font-mono uppercase tracking-wider text-ink-faint block leading-none mb-1">Active Sectors</span>
-              <span className="font-data text-[14px] font-bold text-ink leading-none">{engine?.kpis?.activeZones ?? 0} / 12</span>
+              <span className="text-[9.5px] font-mono   text-slate-400 block leading-none mb-1">Active Sectors</span>
+              <span className="font-data text-[14px] font-bold text-slate-900 leading-none">{engine?.kpis?.activeZones ?? 0} / 12</span>
             </div>
           </div>
           <div className={`flex items-center gap-2 px-3 py-2 rounded-[6px] border flex-1 min-w-[140px] transition-colors ${
-            (engine?.kpis?.highRisk ?? 0) > 0 ? 'bg-status-critical/10 border-status-critical/30 text-status-critical' : 'bg-surface-panel border-border-default text-ink'
+            (engine?.kpis?.highRisk ?? 0) > 0 ? 'bg-red-50 border-red-200 text-red-600' : 'bg-white border-slate-200 text-slate-900'
           }`}>
-            <ShieldAlert size={14} className={(engine?.kpis?.highRisk ?? 0) > 0 ? 'text-status-critical' : 'text-status-safe'} />
+            <ShieldAlert size={14} className={(engine?.kpis?.highRisk ?? 0) > 0 ? 'text-red-600' : 'text-teal-600'} />
             <div>
-              <span className="text-[9.5px] font-mono uppercase tracking-wider text-ink-faint block leading-none mb-1">At Risk</span>
-              <span className={`font-data text-[14px] font-bold leading-none ${(engine?.kpis?.highRisk ?? 0) > 0 ? 'text-status-critical' : 'text-status-safe'}`}>
+              <span className="text-[9.5px] font-mono   text-slate-400 block leading-none mb-1">At Risk</span>
+              <span className={`font-data text-[14px] font-bold leading-none ${(engine?.kpis?.highRisk ?? 0) > 0 ? 'text-red-600' : 'text-teal-600'}`}>
                 {engine?.kpis?.highRisk ?? 0}
               </span>
             </div>
           </div>
           <div className={`flex items-center gap-2 px-3 py-2 rounded-[6px] border flex-1 min-w-[140px] transition-colors ${
-            (engine?.kpis?.activeAlerts ?? 0) > 0 ? 'bg-status-critical/10 border-status-critical/30 text-status-critical' : 'bg-surface-panel border-border-default text-ink'
+            (engine?.kpis?.activeAlerts ?? 0) > 0 ? 'bg-red-50 border-red-200 text-red-600' : 'bg-white border-slate-200 text-slate-900'
           }`}>
-            <BellRing size={14} className={(engine?.kpis?.activeAlerts ?? 0) > 0 ? 'text-status-critical animate-pulse' : 'text-ink-dim'} />
+            <BellRing size={14} className={(engine?.kpis?.activeAlerts ?? 0) > 0 ? 'text-red-600 ' : 'text-slate-500'} />
             <div>
-              <span className="text-[9.5px] font-mono uppercase tracking-wider text-ink-faint block leading-none mb-1">Alerts</span>
-              <span className={`font-data text-[14px] font-bold leading-none ${(engine?.kpis?.activeAlerts ?? 0) > 0 ? 'text-status-critical' : 'text-ink'}`}>
+              <span className="text-[9.5px] font-mono   text-slate-400 block leading-none mb-1">Alerts</span>
+              <span className={`font-data text-[14px] font-bold leading-none ${(engine?.kpis?.activeAlerts ?? 0) > 0 ? 'text-red-600' : 'text-slate-900'}`}>
                 {engine?.kpis?.activeAlerts ?? 0}
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-2 bg-surface-panel px-3 py-2 rounded-[6px] border border-border-default flex-1 min-w-[140px]">
-            <Radio size={14} className="text-status-safe shrink-0" />
+          <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-[6px] border border-slate-200 flex-1 min-w-[140px]">
+            <Radio size={14} className="text-teal-600 shrink-0" />
             <div>
-              <span className="text-[9.5px] font-mono uppercase tracking-wider text-ink-faint block leading-none mb-1">System</span>
-              <span className="font-data text-[14px] font-bold text-status-safe leading-none">{engine?.network?.health ?? 98}%</span>
+              <span className="text-[9.5px] font-mono   text-slate-400 block leading-none mb-1">System</span>
+              <span className="font-data text-[14px] font-bold text-teal-600 leading-none">{engine?.network?.health ?? 98}%</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* ── MAIN MAP AREA ──────────────────────────────────────────────────── */}
-      <div className="flex flex-col h-[480px] rounded-[6px] overflow-hidden border border-border-default shadow-sm relative">
+      <div className="flex flex-col h-[480px] rounded-[6px] overflow-hidden border border-slate-200 shadow-sm relative">
         <LiveMapPage isDashboardMode={true} />
       </div>
 
       {/* ── ZONE INFORMATION CARDS ─────────────────────────────────────────── */}
       <div>
-        <span className="text-[11px] font-mono uppercase tracking-widest text-ink-faint block mb-3">
+        <span className="text-[11px] font-mono   text-slate-400 block mb-3">
           Live Sector Telemetry
         </span>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
@@ -167,38 +157,38 @@ export default function Dashboard() {
                 onClick={() => engine?.setSelectedZoneId(z.id)}
                 className={`flex flex-col text-left p-3 rounded-[6px] border transition-all ${
                   z.status === 'OFF-LIMIT'
-                    ? 'bg-status-critical/10 border-status-critical text-status-critical hover:border-status-critical/80'
+                    ? 'bg-red-50 border-status-critical text-red-600 hover:border-red-200'
                     : isHighRisk
-                      ? 'bg-status-critical/5 border-status-critical/30 hover:border-status-critical/60'
-                      : 'bg-surface-panel border-border-default hover:border-border-muted hover:bg-surface-raised'
+                      ? 'bg-red-600/5 border-red-200 hover:border-red-200'
+                      : 'bg-white border-slate-200 hover:border-slate-200 hover:bg-slate-50'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2 w-full">
-                  <span className="font-semibold text-[12px] text-ink truncate pr-2">
+                  <span className="font-semibold text-[12px] text-slate-900 truncate pr-2">
                     {z.name.split('·')[0].trim()}
                   </span>
                   <div className="flex flex-col items-end">
-                    <span className={`text-[10px] font-mono font-bold uppercase ${z.status === 'OFF-LIMIT' ? 'text-status-critical' : isHighRisk ? 'text-status-critical' : 'text-status-safe'}`}>
+                    <span className={`text-[10px] font-mono font-bold  ${z.status === 'OFF-LIMIT' ? 'text-red-600' : isHighRisk ? 'text-red-600' : 'text-teal-600'}`}>
                       {z.status === 'OFF-LIMIT' ? 'OFF-LIMIT' : Math.round((z.occupancyPercentage ?? z.ratio) * 100) + '%'}
                     </span>
                   </div>
                 </div>
 
-                <div className="w-full h-1.5 rounded-full bg-surface-overlay overflow-hidden mb-2.5">
+                <div className="w-full h-1.5 rounded-full bg-slate-200 overflow-hidden mb-2.5">
                   <div
-                    className={`h-full rounded-full ${z.status === 'OFF-LIMIT' ? 'bg-status-critical' : isHighRisk ? 'bg-status-critical' : z.risk === 'moderate' ? 'bg-status-moderate' : 'bg-status-safe'}`}
+                    className={`h-full rounded-full ${z.status === 'OFF-LIMIT' ? 'bg-red-600' : isHighRisk ? 'bg-red-600' : z.risk === 'moderate' ? 'bg-amber-500' : 'bg-teal-600'}`}
                     style={{ width: `${Math.min(100, (z.occupancyPercentage ?? z.ratio) * 100)}%` }}
                   />
                 </div>
 
-                <div className="flex items-center justify-between text-[10.5px] font-data text-ink-dim w-full mt-auto">
+                <div className="flex items-center justify-between text-[10.5px] font-data text-slate-500 w-full mt-auto">
                   <span>{(z.occupancy ?? z.count).toLocaleString()}</span>
-                  <span className="text-ink-faint">/ {z.capacity.toLocaleString()}</span>
+                  <span className="text-slate-400">/ {z.capacity.toLocaleString()}</span>
                 </div>
 
-                <div className="flex items-center gap-1 mt-1.5 pt-1.5 border-t border-border-muted/50 w-full text-[10px] font-data">
-                  <Activity size={10} className="text-ink-faint" />
-                  <span className={z.netFlow > 2 ? 'text-status-critical' : z.netFlow < -2 ? 'text-accent' : 'text-ink-dim'}>
+                <div className="flex items-center gap-1 mt-1.5 pt-1.5 border-t border-slate-200/50 w-full text-[10px] font-data">
+                  <Activity size={10} className="text-slate-400" />
+                  <span className={z.netFlow > 2 ? 'text-red-600' : z.netFlow < -2 ? 'text-teal-600' : 'text-slate-500'}>
                     {z.netFlow > 0 ? '+' : ''}{z.netFlow}/m net flow
                   </span>
                 </div>
@@ -208,7 +198,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── AI / OPERATIONAL INTELLIGENCE ─────────────────────────────────── */}
+      {/* ── OPERATIONAL INSIGHTS ─────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch pb-6 min-h-[380px]">
         {/* LEFT: CROWD PREDICTION ENGINE */}
         <div className="flex flex-col h-full">
@@ -218,7 +208,7 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* RIGHT: AI RECOMMENDATIONS */}
+        {/* RIGHT: Recommended actionS */}
         <div className="flex flex-col h-full">
           <RecommendationPanel
             recommendations={engine?.recommendations || []}
@@ -242,8 +232,8 @@ export default function Dashboard() {
         <div className="col-span-2 flex flex-col gap-4">
            {/* Chart Row */}
            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-[240px]">
-              <div className="bg-surface-panel rounded-[6px] border border-border-default shadow-sm p-4 flex flex-col">
-                 <span className="text-[11px] font-mono uppercase tracking-widest text-ink-dim mb-4">Entrance / Exit Flow Rates</span>
+              <div className="bg-white rounded-[6px] border border-slate-200 shadow-sm p-4 flex flex-col">
+                 <span className="text-[11px] font-mono   text-slate-500 mb-4">Entrance / Exit Flow Rates</span>
                  <div className="flex-1 w-full h-full min-h-0">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={engine?.flowHistory || []} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
@@ -257,8 +247,8 @@ export default function Dashboard() {
                  </div>
               </div>
 
-              <div className="bg-surface-panel rounded-[6px] border border-border-default shadow-sm p-4 flex flex-col">
-                 <span className="text-[11px] font-mono uppercase tracking-widest text-ink-dim mb-4">Capacity Pressure Distribution</span>
+              <div className="bg-white rounded-[6px] border border-slate-200 shadow-sm p-4 flex flex-col">
+                 <span className="text-[11px] font-mono   text-slate-500 mb-4">Capacity Pressure Distribution</span>
                  <div className="flex-1 w-full h-full min-h-0">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={(engine?.zones || []).slice(0, 6).map(z => ({ name: z.name.split('·')[0].trim(), ratio: (z.occupancyPercentage ?? z.ratio) * 100 }))} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>

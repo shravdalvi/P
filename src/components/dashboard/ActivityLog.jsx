@@ -10,8 +10,8 @@ export default function ActivityLog({ log }) {
       <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
         {log.map((entry, i) => (
           <div key={i} className="flex gap-3 text-[12px]">
-            <span className="font-data text-ink-faint shrink-0 w-12">{entry.time}</span>
-            <span className="text-ink-dim leading-snug">{entry.text}</span>
+            <span className="font-data text-slate-400 shrink-0 w-12">{entry.time}</span>
+            <span className="text-slate-500 leading-snug">{entry.text}</span>
           </div>
         ))}
       </div>

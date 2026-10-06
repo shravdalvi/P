@@ -96,7 +96,7 @@ export const INITIAL_ACTIVITY_LOG = [
   { time: '18:21', text: 'Zone C occupancy crossed 85% threshold.' },
   { time: '18:22', text: 'Prediction engine flagged capacity breach risk.' },
   { time: '18:22', text: 'Critical alert generated for Zone C.' },
-  { time: '18:23', text: 'AI recommendation drafted: redistribute to Zone B / Gate 3.' }
+  { time: '18:23', text: 'Recommended action drafted: redistribute to Zone B / Gate 3.' }
 ]
 
 export const THRESHOLDS = {

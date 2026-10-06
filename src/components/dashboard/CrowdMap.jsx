@@ -18,8 +18,8 @@ export default function CrowdMap({ zones, selectedZoneId, onSelect }) {
     <div id="map" className="panel p-4 lg:p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="font-display font-semibold text-[15px] text-ink">Live Crowd Map</h2>
-          <p className="text-[12px] text-ink-faint mt-0.5">Tap a zone for the full breakdown</p>
+          <h2 className="font-display font-semibold text-[15px] text-slate-900">Live Crowd Map</h2>
+          <p className="text-[12px] text-slate-400 mt-0.5">Tap a zone for the full breakdown</p>
         </div>
         <Legend />
       </div>
@@ -146,7 +146,7 @@ function Legend() {
       {items.map((k) => (
         <div key={k} className="flex items-center gap-1.5">
           <span className={`status-dot ${RISK_STYLES[k].bg}`} />
-          <span className="text-[11px] text-ink-faint">{RISK_STYLES[k].label}</span>
+          <span className="text-[11px] text-slate-400">{RISK_STYLES[k].label}</span>
         </div>
       ))}
     </div>

@@ -27,22 +27,22 @@ export default function Header({ alertCount, onMenuClick, onLogout }) {
   }, [profileMenuOpen])
 
   return (
-    <header className="h-14 shrink-0 flex items-center justify-between px-4 lg:px-6 border-b border-border-default bg-surface-panel sticky top-0 z-30 select-none">
+    <header className="h-[56px] shrink-0 flex items-center justify-between px-4 lg:px-6 border-b border-slate-200 bg-white sticky top-0 z-30 select-none">
       {/* ── Left: Mobile Toggle & Event Context ──────────────────────────── */}
       <div className="flex items-center gap-3 min-w-0">
         <button
           onClick={onMenuClick}
-          className="lg:hidden p-1.5 -ml-1 rounded-[4px] text-ink-dim hover:text-ink hover:bg-surface-raised transition-colors"
+          className="lg:hidden p-1.5 -ml-1 rounded-[4px] text-slate-500 hover:text-slate-900 hover:bg-transparent transition-colors"
           aria-label="Open navigation menu"
         >
           <Menu size={18} />
         </button>
 
         <div className="flex items-center gap-2 truncate">
-          <span className="font-display font-semibold text-[13px] text-ink truncate">
+          <span className="font-display font-semibold text-[13px] text-slate-900 truncate">
             {EVENT.name}
           </span>
-          <span className="hidden sm:inline-block text-ink-faint text-[12px] font-mono">
+          <span className="hidden sm:inline-block text-slate-400 text-[12px] font-mono">
             / {EVENT.venue}
           </span>
         </div>
@@ -50,36 +50,31 @@ export default function Header({ alertCount, onMenuClick, onLogout }) {
 
       {/* ── Right: Telemetry & Controls ──────────────────────────────────── */}
       <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-        {/* LIVE Telemetry Badge */}
-        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] bg-status-safe/10 border border-status-safe/30 text-status-safe text-[11px] font-mono font-medium">
-          <span className="w-1.5 h-1.5 rounded-full bg-status-safe animate-pulse inline-block" />
-          <span>LIVE</span>
-        </div>
 
         {/* System Online Status */}
-        <div className="hidden md:flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] bg-surface-raised border border-border-default text-ink-dim text-[11px] font-mono">
-          <CircleDot size={10} className="text-accent" />
-          <span>Engine Online</span>
+        <div className="hidden md:flex items-center gap-1.5 text-slate-500 text-[12px] font-medium mr-4">
+          <span className="w-1.5 h-1.5 rounded-full bg-teal-500 inline-block"></span>
+          <span>System online</span>
         </div>
 
         {/* Digital Clock */}
-        <div className="hidden sm:flex items-center px-2 py-0.5 rounded-[4px] bg-surface-raised border border-border-muted text-ink-dim text-[11px] font-data">
+        <div className="hidden sm:flex items-center px-3 py-0.5 text-slate-500 text-[12px] font-mono mr-2 border-r border-slate-200">
           {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
         </div>
 
         {/* Alert Indicator (clickable -> /alerts) */}
         <button
           onClick={() => navigate('/alerts')}
-          className="relative p-1.5 rounded-[4px] border border-border-default bg-surface-raised text-ink-dim hover:text-ink hover:border-accent/40 transition-colors flex items-center gap-1.5"
+          className="relative p-1.5 rounded-[4px] border border-slate-200 bg-transparent text-slate-500 hover:text-slate-900 hover:border-teal-600/40 transition-colors flex items-center gap-1.5"
           title="View Operational Alerts"
         >
           {alertCount > 0 ? (
-            <ShieldAlert size={15} className="text-status-critical" />
+            <ShieldAlert size={15} className="text-red-600" />
           ) : (
             <Bell size={15} />
           )}
           {alertCount > 0 && (
-            <span className="min-w-[16px] h-[16px] flex items-center justify-center rounded-[3px] bg-status-critical px-1 text-[10px] font-data font-bold text-white leading-none">
+            <span className="min-w-[16px] h-[16px] flex items-center justify-center rounded-[3px] bg-red-600 px-1 text-[10px] font-data font-bold text-white leading-none">
               {alertCount}
             </span>
           )}
@@ -90,31 +85,29 @@ export default function Header({ alertCount, onMenuClick, onLogout }) {
           <button
             type="button"
             onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-            className={`flex items-center gap-2 rounded-[4px] border border-border-default px-2 py-1 transition-colors ${
-              profileMenuOpen ? 'bg-surface-overlay border-accent/40' : 'bg-surface-raised hover:border-accent/40'
-            }`}
+            className="flex items-center gap-2 px-2 py-1 transition-colors text-slate-500 hover:text-slate-900"
             title="Operator Profile"
           >
-            <div className="w-6 h-6 rounded-[3px] bg-accent/20 border border-accent/40 text-accent text-[10.5px] font-mono font-bold flex items-center justify-center">
+            <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
               <User size={13} />
             </div>
-            <span className="hidden md:inline-block text-[11.5px] font-medium text-ink-dim">
+            <span className="hidden md:inline-block text-[11.5px] font-medium text-slate-500">
               Profile
             </span>
           </button>
 
           {profileMenuOpen && (
-            <div className="absolute right-0 top-full mt-2 w-48 rounded-[6px] bg-surface-overlay border border-border-default shadow-xl p-1.5 flex flex-col gap-1 z-50">
-              <div className="px-2.5 py-2 border-b border-border-default mb-1">
-                <p className="text-[10px] font-mono tracking-widest uppercase text-ink-faint">Operator</p>
-                <p className="text-[12.5px] font-medium text-ink mt-0.5">Active Session</p>
+            <div className="absolute right-0 top-full mt-2 w-48 rounded-[6px] bg-white border border-slate-200 shadow-xl p-1.5 flex flex-col gap-1 z-50">
+              <div className="px-2.5 py-2 border-b border-slate-200 mb-1">
+                <p className="text-[10px] font-mono   text-slate-400">Operator</p>
+                <p className="text-[12.5px] font-medium text-slate-900 mt-0.5">Active Session</p>
               </div>
               <button
                 onClick={() => {
                   setProfileMenuOpen(false)
                   navigate('/profile')
                 }}
-                className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-[4px] text-[12.5px] text-ink-dim hover:text-ink hover:bg-surface-raised transition-colors"
+                className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-[4px] text-[12.5px] text-slate-500 hover:text-slate-900 hover:bg-transparent transition-colors"
               >
                 <User size={14} />
                 <span>My Profile</span>
@@ -125,7 +118,7 @@ export default function Header({ alertCount, onMenuClick, onLogout }) {
                   onLogout?.()
                   navigate('/')
                 }}
-                className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-[4px] text-[12.5px] text-status-critical hover:bg-status-critical/10 transition-colors"
+                className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-[4px] text-[12.5px] text-red-600 hover:bg-red-50 transition-colors"
               >
                 <LogOut size={14} />
                 <span>Sign out</span>

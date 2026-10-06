@@ -24,7 +24,7 @@ export default function Analytics() {
     <div className="p-4 lg:p-6 space-y-4 max-w-[1400px] mx-auto">
       <div>
         <h1 className="font-display font-semibold text-[19px]">Analytics</h1>
-        <p className="text-[12.5px] text-ink-faint mt-0.5">Historical trends across zones, transport and response</p>
+        <p className="text-[12.5px] text-slate-400 mt-0.5">Historical trends across zones, transport and response</p>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
@@ -88,9 +88,9 @@ export default function Analytics() {
 function SummaryCard({ label, value, hint }) {
   return (
     <div className="panel p-4">
-      <p className="text-[11px] text-ink-faint">{label}</p>
-      <p className="font-data text-[20px] font-semibold text-ink mt-1">{value}</p>
-      <p className="text-[11px] text-ink-faint mt-1">{hint}</p>
+      <p className="text-[11px] text-slate-400">{label}</p>
+      <p className="font-data text-[20px] font-semibold text-slate-900 mt-1">{value}</p>
+      <p className="text-[11px] text-slate-400 mt-1">{hint}</p>
     </div>
   )
 }
