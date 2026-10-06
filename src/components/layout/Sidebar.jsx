@@ -37,7 +37,7 @@ export default function Sidebar({ role, mobile = false }) {
               <Activity size={18} strokeWidth={2.2} />
             </div>
             <div className="min-w-0 leading-tight">
-              <p className="text-[14.5px] font-semibold tracking-wide text-ink truncate">
+              <p className="text-[12.5px] font-semibold tracking-[0.02em] text-ink truncate whitespace-nowrap">
                 Vibecheck Controller
               </p>
             </div>
