@@ -24,19 +24,19 @@ export default function ProfilePage({ profile }) {
         </button>
         <div>
           <p className="text-[10.5px]  font-mono  text-slate-400">OPERATOR ACCESS</p>
-          <h1 className="font-display font-bold text-2xl text-slate-900">Operator Account</h1>
+          <h1 className="font-display font-semibold text-2xl tracking-tight text-slate-900">Operator Account</h1>
         </div>
       </div>
 
       <div className="panel p-6 lg:p-7 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-slate-200">
           <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-[6px] bg-teal-100 border border-teal-600/40 text-teal-600 text-xl font-mono font-bold">
+            <div className="flex h-14 w-14 items-center justify-center rounded-[6px] bg-teal-100 border border-teal-600/40 text-teal-600 text-xl font-mono font-semibold">
               {user.name?.charAt(0)?.toUpperCase() || 'U'}
             </div>
             <div>
               <p className="text-[11px]  font-mono  text-slate-400">Active Session</p>
-              <h2 className="font-display font-bold text-2xl text-slate-900 mt-0.5">{user.name}</h2>
+              <h2 className="font-display font-semibold text-2xl tracking-tight text-slate-900 mt-0.5">{user.name}</h2>
             </div>
           </div>
 

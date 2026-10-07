@@ -28,7 +28,7 @@ export default function DevicesPage() {
   return (
     <div className="p-4 lg:p-6 max-w-6xl mx-auto space-y-6 bg-slate-100 min-h-full">
       <div className="pb-2 border-b border-slate-200">
-        <h1 className="text-2xl font-display font-bold text-slate-900">Systems</h1>
+        <h1 className="text-2xl font-display font-semibold tracking-tight text-slate-900">Systems</h1>
         <p className="text-sm text-slate-500 mt-1">Runtime state, data pipeline, and simulation controls</p>
       </div>
 
@@ -39,7 +39,7 @@ export default function DevicesPage() {
             <Wifi size={16} className={isConnected ? 'text-teal-600' : 'text-amber-500'} />
             <span className="text-[10px] font-mono  text-slate-400">Backend</span>
           </div>
-          <div className={`text-sm font-bold ${isConnected ? 'text-teal-600' : 'text-amber-500'}`}>
+          <div className={`text-sm font-semibold ${isConnected ? 'text-teal-600' : 'text-amber-500'}`}>
             {isConnected ? 'CONNECTED' : 'LOCAL ONLY'}
           </div>
           <div className="text-[11px] text-slate-400 mt-1">
@@ -52,7 +52,7 @@ export default function DevicesPage() {
             <Cpu size={16} className={running ? 'text-teal-600' : 'text-slate-500'} />
             <span className="text-[10px] font-mono  text-slate-400">Simulator</span>
           </div>
-          <div className={`text-sm font-bold ${running ? 'text-teal-600' : 'text-slate-500'}`}>
+          <div className={`text-sm font-semibold ${running ? 'text-teal-600' : 'text-slate-500'}`}>
             {running ? 'RUNNING' : 'PAUSED'}
           </div>
           <div className="text-[11px] text-slate-400 mt-1">Tick interval: 3s</div>
@@ -63,7 +63,7 @@ export default function DevicesPage() {
             <Database size={16} className="text-slate-500" />
             <span className="text-[10px] font-mono  text-slate-400">Zones</span>
           </div>
-          <div className="text-sm font-bold text-slate-900">{activeZones} Active</div>
+          <div className="text-sm font-semibold text-slate-900">{activeZones} Active</div>
           <div className="text-[11px] text-slate-400 mt-1">{criticalZones} OFF-LIMIT</div>
         </div>
 
@@ -72,7 +72,7 @@ export default function DevicesPage() {
             <Zap size={16} className={globalPressure > 80 ? 'text-red-600' : 'text-teal-600'} />
             <span className="text-[10px] font-mono  text-slate-400">Global Pressure</span>
           </div>
-          <div className={`text-sm font-bold ${globalPressure > 80 ? 'text-red-600' : globalPressure > 65 ? 'text-amber-500' : 'text-teal-600'}`}>
+          <div className={`text-sm font-semibold ${globalPressure > 80 ? 'text-red-600' : globalPressure > 65 ? 'text-amber-500' : 'text-teal-600'}`}>
             {globalPressure}%
           </div>
           <div className="text-[11px] text-slate-400 mt-1">{totalCrowd.toLocaleString()} / {totalCapacity.toLocaleString()}</div>
@@ -118,7 +118,7 @@ export default function DevicesPage() {
                     : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-900 hover:border-slate-200'
                 }`}
               >
-                <span className="font-bold ">{s.label}</span>
+                <span className="font-semibold">{s.label}</span>
                 <span className="text-[10px] mt-1 opacity-70 leading-snug">{s.desc}</span>
               </button>
             ))}
@@ -153,14 +153,14 @@ export default function DevicesPage() {
                   <td className="px-4 py-2.5 font-data text-right">{(z.count ?? 0).toLocaleString()}</td>
                   <td className="px-4 py-2.5 font-data text-right text-slate-500">{(z.capacity ?? 0).toLocaleString()}</td>
                   <td className="px-4 py-2.5 font-data text-right">
-                    <span className={ratio > 0.85 ? 'text-red-600 font-bold' : ratio > 0.7 ? 'text-amber-500' : 'text-teal-600'}>
+                    <span className={ratio > 0.85 ? 'text-red-600 font-semibold' : ratio > 0.7 ? 'text-amber-500' : 'text-teal-600'}>
                       {Math.round(ratio * 100)}%
                     </span>
                   </td>
                   <td className="px-4 py-2.5 font-data text-right text-teal-600">{z.incoming ?? 0}</td>
                   <td className="px-4 py-2.5 font-data text-right text-slate-500">{z.outgoing ?? 0}</td>
                   <td className="px-4 py-2.5 text-right">
-                    <span className={`text-[10px] font-bold  px-2 py-0.5 rounded ${
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${
                       z.status === 'OFF-LIMIT' ? 'bg-red-50 text-red-600 border border-red-200' :
                       z.risk === 'high' ? 'bg-red-50 text-red-500 border border-red-200' :
                       'bg-teal-50 text-teal-600 border border-teal-200'
@@ -200,7 +200,7 @@ export default function DevicesPage() {
                 <div className="text-sm font-semibold text-slate-900">{item.label}</div>
                 <div className="text-[11px] text-slate-400">{item.detail}</div>
               </div>
-              <span className={`text-[10px] font-bold  px-2 py-0.5 rounded border ${
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${
                 item.status === 'active' ? 'text-teal-600 border-teal-200 bg-teal-50' :
                 item.status === 'paused' ? 'text-amber-500 border-amber-200 bg-amber-50' :
                 item.status === 'degraded' ? 'text-amber-500 border-amber-200 bg-amber-50' :

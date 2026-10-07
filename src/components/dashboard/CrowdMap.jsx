@@ -104,17 +104,17 @@ export default function CrowdMap({ zones, selectedZoneId, onSelect }) {
                   </g>
                 )}
 
-                <text x="10" y="20" fontSize="11.5" fontFamily="Space Grotesk, sans-serif" fontWeight="600" fill="#E6EDF3">
+                <text x="10" y="20" fontSize="11.5" fontFamily="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" fontWeight="600" fill="#E6EDF3">
                   {z.name.split('·')[0].trim()}
                 </text>
-                <text x="10" y="37" fontSize="10.5" fontFamily="Inter, sans-serif" fill="#8B949E">
+                <text x="10" y="37" fontSize="10.5" fontFamily="-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" fill="#8B949E">
                   {z.name.includes('·') ? z.name.split('·')[1].trim() : ''}
                 </text>
                 <text
                   x="10"
                   y={z.h - 12}
                   fontSize="15"
-                  fontFamily="JetBrains Mono, monospace"
+                  fontFamily="'SF Mono', ui-monospace, 'JetBrains Mono', 'Roboto Mono', monospace"
                   fontWeight="600"
                   fill={fill}
                 >
@@ -124,7 +124,7 @@ export default function CrowdMap({ zones, selectedZoneId, onSelect }) {
                   x={z.w - 10}
                   y={z.h - 12}
                   fontSize="10"
-                  fontFamily="JetBrains Mono, monospace"
+                  fontFamily="'SF Mono', ui-monospace, 'JetBrains Mono', 'Roboto Mono', monospace"
                   fill="#8B949E"
                   textAnchor="end"
                 >

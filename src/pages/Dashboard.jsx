@@ -68,28 +68,28 @@ export default function Dashboard() {
                   <TrendingUp size={14} className="text-red-600 shrink-0" />
                   <div>
                     <span className="text-[9.5px] font-mono  text-slate-400 block leading-tight">Rush Toward</span>
-                    <span className="font-bold text-red-600 truncate">{focusZone.name.split('·')[0].trim()}</span>
+                    <span className="font-semibold text-red-600 truncate">{focusZone.name.split('·')[0].trim()}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <ArrowRight size={14} className="text-teal-600 shrink-0" />
                   <div>
                     <span className="text-[9.5px] font-mono  text-slate-400 block leading-tight">Divert To</span>
-                    <span className="font-bold text-teal-600 truncate">{divertZone ? divertZone.name.split('·')[0].trim() : 'N/A'}</span>
+                    <span className="font-semibold text-teal-600 truncate">{divertZone ? divertZone.name.split('·')[0].trim() : 'N/A'}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock size={14} className="text-amber-500 shrink-0" />
                   <div>
                     <span className="text-[9.5px] font-mono  text-slate-400 block leading-tight">Risk Window</span>
-                    <span className="font-mono font-bold text-amber-500">{riskWindow}</span>
+                    <span className="font-mono font-semibold text-amber-500">{riskWindow}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-teal-600  shrink-0" />
                   <div>
                     <span className="text-[9.5px] font-mono  text-slate-400 block leading-tight">Action Window</span>
-                    <span className="font-mono font-bold text-teal-600">{actionWindow}</span>
+                    <span className="font-mono font-semibold text-teal-600">{actionWindow}</span>
                   </div>
                 </div>
               </div>
@@ -103,7 +103,7 @@ export default function Dashboard() {
             <LayoutGrid size={14} className="text-slate-500 shrink-0" />
             <div>
               <span className="text-[9.5px] font-mono   text-slate-400 block leading-none mb-1">Active Sectors</span>
-              <span className="font-data text-[14px] font-bold text-slate-900 leading-none">{engine?.kpis?.activeZones ?? 0} / 12</span>
+              <span className="font-data text-[14px] font-semibold text-slate-900 leading-none">{engine?.kpis?.activeZones ?? 0} / 12</span>
             </div>
           </div>
           <div className={`flex items-center gap-2 px-3 py-2 rounded-[6px] border flex-1 min-w-[140px] transition-colors ${
@@ -112,7 +112,7 @@ export default function Dashboard() {
             <ShieldAlert size={14} className={(engine?.kpis?.highRisk ?? 0) > 0 ? 'text-red-600' : 'text-teal-600'} />
             <div>
               <span className="text-[9.5px] font-mono   text-slate-400 block leading-none mb-1">At Risk</span>
-              <span className={`font-data text-[14px] font-bold leading-none ${(engine?.kpis?.highRisk ?? 0) > 0 ? 'text-red-600' : 'text-teal-600'}`}>
+              <span className={`font-data text-[14px] font-semibold leading-none ${(engine?.kpis?.highRisk ?? 0) > 0 ? 'text-red-600' : 'text-teal-600'}`}>
                 {engine?.kpis?.highRisk ?? 0}
               </span>
             </div>
@@ -123,7 +123,7 @@ export default function Dashboard() {
             <BellRing size={14} className={(engine?.kpis?.activeAlerts ?? 0) > 0 ? 'text-red-600 ' : 'text-slate-500'} />
             <div>
               <span className="text-[9.5px] font-mono   text-slate-400 block leading-none mb-1">Alerts</span>
-              <span className={`font-data text-[14px] font-bold leading-none ${(engine?.kpis?.activeAlerts ?? 0) > 0 ? 'text-red-600' : 'text-slate-900'}`}>
+              <span className={`font-data text-[14px] font-semibold leading-none ${(engine?.kpis?.activeAlerts ?? 0) > 0 ? 'text-red-600' : 'text-slate-900'}`}>
                 {engine?.kpis?.activeAlerts ?? 0}
               </span>
             </div>
@@ -132,7 +132,7 @@ export default function Dashboard() {
             <Radio size={14} className="text-teal-600 shrink-0" />
             <div>
               <span className="text-[9.5px] font-mono   text-slate-400 block leading-none mb-1">System</span>
-              <span className="font-data text-[14px] font-bold text-teal-600 leading-none">{engine?.network?.health ?? 98}%</span>
+              <span className="font-data text-[14px] font-semibold text-teal-600 leading-none">{engine?.network?.health ?? 98}%</span>
             </div>
           </div>
         </div>
@@ -168,7 +168,7 @@ export default function Dashboard() {
                     {z.name.split('·')[0].trim()}
                   </span>
                   <div className="flex flex-col items-end">
-                    <span className={`text-[10px] font-mono font-bold  ${z.status === 'OFF-LIMIT' ? 'text-red-600' : isHighRisk ? 'text-red-600' : 'text-teal-600'}`}>
+                    <span className={`text-[10px] font-mono font-semibold ${z.status === 'OFF-LIMIT' ? 'text-red-600' : isHighRisk ? 'text-red-600' : 'text-teal-600'}`}>
                       {z.status === 'OFF-LIMIT' ? 'OFF-LIMIT' : Math.round((z.occupancyPercentage ?? z.ratio) * 100) + '%'}
                     </span>
                   </div>

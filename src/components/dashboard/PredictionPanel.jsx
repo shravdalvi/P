@@ -29,10 +29,10 @@ export default function PredictionPanel({ aiPrediction, onSelect }) {
         {/* Top Section */}
         <div className="mb-4">
           <div className="flex justify-between items-start mb-1">
-            <h3 className="font-display font-bold text-lg text-slate-900">
+            <h3 className="font-display font-semibold text-lg tracking-tight text-slate-900">
               {aiPrediction.zoneName.split('·')[0].trim()}
             </h3>
-            <span className="text-[10px] font-mono font-bold  text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-200">
+            <span className="text-[10px] font-mono font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-200">
               Likely to become OFF-LIMIT
             </span>
           </div>
@@ -82,7 +82,7 @@ export default function PredictionPanel({ aiPrediction, onSelect }) {
                   </Pie>
                 </PieChart>
              </ResponsiveContainer>
-             <span className="absolute bottom-2 font-display font-bold text-red-600 text-[13px]">CRITICAL</span>
+             <span className="absolute bottom-2 font-display font-semibold text-red-600 text-[13px]">CRITICAL</span>
           </div>
         </div>
 

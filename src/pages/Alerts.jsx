@@ -30,7 +30,7 @@ export default function AlertsPage() {
             INCIDENT MANAGEMENT
           </p>
           <div className="flex items-center gap-2.5 mt-1">
-            <h1 className="font-display font-bold text-2xl text-slate-900">Operational Alerts Queue</h1>
+            <h1 className="font-display font-semibold text-2xl tracking-tight text-slate-900">Operational Alerts Queue</h1>
             <span className="font-mono text-[11px] px-2 py-0.5 rounded-[4px] bg-red-50 text-red-600 border border-red-200">
               {alerts.filter((a) => a.status !== 'resolved').length} Active
             </span>
@@ -86,7 +86,7 @@ export default function AlertsPage() {
 
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`text-[10px] font-mono font-bold  px-1.5 py-0.5 rounded-[3px] ${style.soft} ${style.text} border ${style.border}`}>
+                        <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded-[3px] ${style.soft} ${style.text} border ${style.border}`}>
                           {alert.severity}
                         </span>
                         <span className="font-mono text-[11px] text-slate-400">{alert.id}</span>

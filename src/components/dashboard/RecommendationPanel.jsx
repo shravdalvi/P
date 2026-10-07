@@ -34,7 +34,7 @@ export default function RecommendationPanel({ recommendations, zones, contingenc
 
       <div className="flex-1 flex flex-col min-h-0 bg-slate-50 border border-slate-200 rounded-[6px] p-4 relative overflow-hidden">
         <div className="mb-3 border-b border-slate-200 pb-3">
-          <p className="text-[14px] font-bold text-red-600 mb-1  ">
+          <p className="text-[14px] font-semibold text-red-600 mb-1">
             {activeRec.sourceZone.split('·')[0].trim()} {activeRec.status === 'pending' ? 'NEEDS CROWD CONTROL' : 'IS UNDER CROWD CONTROL'}
           </p>
           <p className="text-[13px] text-slate-900 font-medium">
@@ -88,7 +88,7 @@ export default function RecommendationPanel({ recommendations, zones, contingenc
             </>
           ) : (activeRec.status === 'approved' || activeRec.status === 'executing' || activeRec.status === 'monitoring') ? (
             <div className="flex-1 flex flex-col items-center justify-center py-1">
-              <span className="text-[12px] font-bold text-teal-600   mb-1 flex items-center gap-2">
+              <span className="text-[12px] font-semibold text-teal-600 mb-1 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-teal-600 "></span>
                 {activeRec.status === 'executing' ? 'Executing Redirect' : 'Monitoring Execution'}
               </span>
@@ -96,7 +96,7 @@ export default function RecommendationPanel({ recommendations, zones, contingenc
             </div>
           ) : activeRec.status === 'resolved' ? (
             <div className="flex-1 flex flex-col items-center justify-center py-1 gap-2">
-              <span className="text-[12px] font-bold text-teal-600   flex items-center gap-2">
+              <span className="text-[12px] font-semibold text-teal-600 flex items-center gap-2">
                 <Check size={14} /> Congestion Resolved
               </span>
               <button onClick={() => onDismiss(activeRec.id)} className="text-[11px] px-3 py-1.5 border border-slate-200 rounded-[4px] text-slate-500 hover:text-slate-900">Acknowledge</button>

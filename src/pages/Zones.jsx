@@ -285,7 +285,7 @@ export default function ZonesPage() {
     <div className="flex flex-col h-full bg-slate-100 text-slate-900 p-6 gap-6 overflow-y-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-display font-bold">Zones Administration</h1>
+          <h1 className="text-2xl font-display font-semibold tracking-tight">Zones Administration</h1>
           <p className="text-slate-500 text-sm mt-1">Manage event sector capacities and live telemetry</p>
         </div>
         <div className="flex items-center gap-3">
@@ -335,7 +335,7 @@ export default function ZonesPage() {
                     <tr key={z.id} className="border-b border-slate-200/30 hover:bg-slate-50 transition-colors">
                       <td className="px-4 py-3 font-medium">{z.name}</td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded text-[10px] font-bold  ${z.status === 'OFF-LIMIT' ? 'bg-red-50 text-red-600' : 'bg-teal-50 text-teal-600'}`}>
+                        <span className={`px-2 py-1 rounded text-[10px] font-semibold ${z.status === 'OFF-LIMIT' ? 'bg-red-50 text-red-600' : 'bg-teal-50 text-teal-600'}`}>
                           {z.status}
                         </span>
                       </td>
@@ -432,8 +432,8 @@ export default function ZonesPage() {
                            <span className="text-xs font-mono text-slate-500">{z.capacity} cap</span>
                          </div>
                          <div className="flex gap-2">
-                           <button onClick={() => { setEditZoneId(z.id); setNewZone({ name: z.name, capacity: z.capacity, type: z.type || 'General', radius: 0.1 }); setIsAdding(true); }} className="text-[10px]  font-bold text-slate-500 hover:text-teal-600">Edit</button>
-                           <button onClick={() => { if(confirm('Delete zone?')) engine.deleteZone(z.id); }} className="text-[10px]  font-bold text-slate-500 hover:text-red-600">Delete</button>
+                           <button onClick={() => { setEditZoneId(z.id); setNewZone({ name: z.name, capacity: z.capacity, type: z.type || 'General', radius: 0.1 }); setIsAdding(true); }} className="text-[10px] font-semibold text-slate-500 hover:text-teal-600">Edit</button>
+                           <button onClick={() => { if(confirm('Delete zone?')) engine.deleteZone(z.id); }} className="text-[10px] font-semibold text-slate-500 hover:text-red-600">Delete</button>
                          </div>
                        </div>
                     ))}

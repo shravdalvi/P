@@ -59,7 +59,7 @@ export default function Login({ onLogin }) {
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="font-display font-bold text-[15px]  text-slate-900 ">
+              <span className="font-display font-semibold text-[15px] tracking-tight text-slate-900">
                 Vibecheck Controller
               </span>
               <span className="w-1.5 h-1.5 rounded-full bg-teal-600 inline-block" />

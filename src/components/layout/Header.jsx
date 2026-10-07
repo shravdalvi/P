@@ -74,7 +74,7 @@ export default function Header({ alertCount, onMenuClick, onLogout }) {
             <Bell size={15} />
           )}
           {alertCount > 0 && (
-            <span className="min-w-[16px] h-[16px] flex items-center justify-center rounded-[3px] bg-red-600 px-1 text-[10px] font-data font-bold text-white leading-none">
+            <span className="min-w-[16px] h-[16px] flex items-center justify-center rounded-[3px] bg-red-600 px-1 text-[10px] font-data font-semibold text-white leading-none">
               {alertCount}
             </span>
           )}

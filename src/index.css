@@ -14,6 +14,17 @@ body {
   @apply bg-slate-50 text-slate-900 font-body antialiased;
   background-color: #F8FAFC;
   color: #0F172A;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
 
 ::selection {
@@ -40,6 +51,11 @@ body {
     @apply font-data tabular-nums;
   }
 
+  .font-data,
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+
   .panel {
     @apply bg-white border border-slate-200 rounded-[6px] shadow-none;
   }
@@ -47,6 +63,17 @@ body {
   .status-dot {
     @apply inline-block w-2 h-2 rounded-full;
   }
+}
+
+/* ── Third-party UI typography inheritance ────────────────────────────────── */
+.maplibregl-popup,
+.maplibregl-ctrl,
+.recharts-default-tooltip,
+.recharts-tooltip-wrapper,
+.recharts-cartesian-axis-tick-value,
+.recharts-text,
+.recharts-legend-item-text {
+  font-family: inherit;
 }
 
 /* ── Animation utilities ── */

@@ -57,7 +57,7 @@ export default function Sidebar({ role, mobile = false }) {
       {/* ── Footer / Operator Identity ───────────────────────────────────── */}
       <div className="p-3">
         <div className={`flex items-center ${isCollapsed ? 'justify-center w-11 h-11 mx-auto' : 'gap-3 px-2 py-2'} rounded-[8px] hover:bg-slate-50 cursor-pointer transition-colors overflow-hidden`}>
-          <div className="w-8 h-8 rounded-full bg-teal-50 text-teal-600 text-[12.5px] font-bold flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded-full bg-teal-50 text-teal-600 text-[12.5px] font-semibold flex items-center justify-center shrink-0">
             {role?.[0] ?? 'A'}
           </div>
           {!isCollapsed && (

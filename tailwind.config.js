@@ -4,9 +4,53 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        display: ['Inter', 'system-ui', 'sans-serif'],
-        body: ['Inter', 'system-ui', 'sans-serif'],
-        data: ['"JetBrains Mono"', 'monospace']
+        display: [
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"SF Pro Display"',
+          '"SF Pro Text"',
+          '"Segoe UI"',
+          'Roboto',
+          'Helvetica',
+          'Arial',
+          'sans-serif'
+        ],
+        body: [
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"SF Pro Text"',
+          '"SF Pro Display"',
+          '"Segoe UI"',
+          'Roboto',
+          'Helvetica',
+          'Arial',
+          'sans-serif'
+        ],
+        sans: [
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"SF Pro Text"',
+          '"SF Pro Display"',
+          '"Segoe UI"',
+          'Roboto',
+          'Helvetica',
+          'Arial',
+          'sans-serif'
+        ],
+        data: [
+          '"SF Mono"',
+          'ui-monospace',
+          '"JetBrains Mono"',
+          '"Roboto Mono"',
+          'monospace'
+        ],
+        mono: [
+          '"SF Mono"',
+          'ui-monospace',
+          '"JetBrains Mono"',
+          '"Roboto Mono"',
+          'monospace'
+        ]
       },
       colors: {
         'surface-base': '#F8FAFC',
