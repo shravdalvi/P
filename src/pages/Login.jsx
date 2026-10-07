@@ -50,41 +50,24 @@ export default function Login({ onLogin }) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100 px-4 py-8">
-      <div className="w-full max-w-[420px] bg-white border border-slate-200 rounded-[6px] p-6 sm:p-7 shadow-md">
-        {/* ── Brand Header ──────────────────────────────────────────────── */}
-        <div className="flex items-center gap-3 mb-5 pb-5 border-b border-slate-200">
-          <div className="w-10 h-10 rounded-[6px] bg-slate-50 border border-slate-200 flex items-center justify-center text-teal-600 shrink-0">
-            <Activity size={20} strokeWidth={2.5} />
+    <div className="min-h-screen flex items-center justify-center bg-zinc-950 px-4 py-8 font-sans">
+      <div className="w-full max-w-[420px] bg-white rounded-[24px] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
+        {/* Header */}
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-14 h-14 rounded-[16px] bg-[#FACC15] flex items-center justify-center text-black mb-4 shadow-sm">
+            <Activity size={28} strokeWidth={2.5} />
           </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="font-display font-semibold text-[15px] tracking-tight text-slate-900">
-                Vibecheck Controller
-              </span>
-              <span className="w-1.5 h-1.5 rounded-full bg-teal-600 inline-block" />
-            </div>
-            <p className="text-[11px] font-mono  text-slate-400 ">
-              Operations Command Center
-            </p>
-          </div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-zinc-900">
+            Vibecheck
+          </h1>
+          <p className="text-[13px] text-zinc-500 font-medium mt-1">
+            Dashboard & Controller
+          </p>
         </div>
 
-        {/* ── Event Context Banner ───────────────────────────────────────── */}
-        <div className="mb-5 px-3 py-2 rounded-[4px] bg-slate-50 border border-slate-200 flex items-center justify-between text-[11.5px]">
-          <div className="flex items-center gap-2 text-slate-500 truncate">
-            <Radio size={13} className="text-teal-600 shrink-0 " />
-            <span className="truncate">{EVENT.name}</span>
-          </div>
-
-        </div>
-
-        {/* ── Role Selector Tabs ─────────────────────────────────────────── */}
-        <div className="mb-5">
-          <label className="text-[11px] font-mono  text-slate-400 block mb-2">
-            Operational Role
-          </label>
-          <div className="grid grid-cols-3 gap-1 p-1 rounded-[6px] bg-slate-50 border border-slate-200">
+        {/* Role Selector Tabs */}
+        <div className="mb-6">
+          <div className="flex bg-zinc-100 p-1 rounded-[12px]">
             {ROLES.map((r) => (
               <button
                 key={r.id}
@@ -93,10 +76,10 @@ export default function Login({ onLogin }) {
                   setRoleId(r.id)
                   setEmail(r.email)
                 }}
-                className={`text-[11.5px] py-1.5 rounded-[4px] font-medium transition-all ${
+                className={`flex-1 text-[13px] py-2 rounded-[8px] font-semibold transition-all ${
                   roleId === r.id
-                    ? 'bg-teal-600 text-white font-semibold shadow-sm'
-                    : 'text-slate-500 hover:text-slate-900 hover:bg-white/60'
+                    ? 'bg-white text-black shadow-sm'
+                    : 'text-zinc-500 hover:text-zinc-900'
                 }`}
               >
                 {r.label}
@@ -105,43 +88,38 @@ export default function Login({ onLogin }) {
           </div>
         </div>
 
-        {/* ── Error Banner ──────────────────────────────────────────────── */}
+        {/* Error Banner */}
         {error && (
-          <div className="mb-4 px-3 py-2 rounded-[4px] bg-red-600/10 border border-red-600/20 text-red-600 text-[12px]">
+          <div className="mb-6 px-4 py-3 rounded-[12px] bg-red-50 text-red-600 text-[13px] font-medium border border-red-100 text-center">
             {error}
           </div>
         )}
 
-        {/* ── Login Form ────────────────────────────────────────────────── */}
-        <form onSubmit={handleSubmit} className="space-y-3.5">
+        {/* Login Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-[11px] font-mono  text-slate-400 block mb-1">
-              Operator Identification
-            </label>
-            <div className="flex items-center gap-2.5 rounded-[6px] border border-slate-200 bg-slate-50 px-3 py-2 focus-within:border-teal-600 transition-colors">
-              <Mail size={14} className="text-slate-400 shrink-0" />
+            <div className="flex items-center gap-3 rounded-[12px] border border-zinc-200 bg-white px-4 py-3.5 focus-within:border-black focus-within:ring-1 focus-within:ring-black transition-all">
+              <Mail size={18} className="text-zinc-400 shrink-0" />
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="bg-transparent outline-none text-[13px] text-slate-900 w-full font-mono placeholder:text-slate-400"
+                className="bg-transparent outline-none text-[15px] font-medium text-zinc-900 w-full placeholder:text-zinc-400"
+                placeholder="Email address"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="text-[11px] font-mono  text-slate-400 block mb-1">
-              Access Credential
-            </label>
-            <div className="flex items-center gap-2.5 rounded-[6px] border border-slate-200 bg-slate-50 px-3 py-2 focus-within:border-teal-600 transition-colors">
-              <Lock size={14} className="text-slate-400 shrink-0" />
+            <div className="flex items-center gap-3 rounded-[12px] border border-zinc-200 bg-white px-4 py-3.5 focus-within:border-black focus-within:ring-1 focus-within:ring-black transition-all">
+              <Lock size={18} className="text-zinc-400 shrink-0" />
               <input
                 type="password"
                 value={password}
-                placeholder={firebaseEnabled ? "Password required" : "Demo mode — any password"}
+                placeholder={firebaseEnabled ? "Password" : "Any password works"}
                 onChange={(e) => setPassword(e.target.value)}
-                className="bg-transparent outline-none text-[13px] text-slate-900 w-full placeholder:text-slate-400"
+                className="bg-transparent outline-none text-[15px] font-medium text-zinc-900 w-full placeholder:text-zinc-400"
                 required={firebaseEnabled}
               />
             </div>
@@ -150,19 +128,15 @@ export default function Login({ onLogin }) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-600-hover disabled:opacity-50 text-white font-semibold text-[13.5px] py-2.5 rounded-[6px] transition-colors mt-4"
+            className="w-full flex items-center justify-center gap-2 bg-[#FACC15] hover:bg-[#EAB308] disabled:opacity-50 text-black font-bold text-[15px] py-4 rounded-[12px] transition-all mt-4"
           >
-            {loading ? 'Authenticating...' : 'Enter Command Center'} <ArrowRight size={15} />
+            {loading ? 'Signing in...' : 'Sign In'} <ArrowRight size={18} />
           </button>
         </form>
 
-        {/* ── Security / Ingestion Footnote ─────────────────────────────── */}
-        <div className="mt-5 pt-4 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-400">
-          <div className="flex items-center gap-1.5">
-            <ShieldCheck size={13} className="text-teal-600" />
-            <span>Role-Gated Access</span>
-          </div>
-          <span className="font-mono">{firebaseEnabled ? 'Firebase Auth' : 'Local Engine v1.0'}</span>
+        {/* Footer */}
+        <div className="mt-8 text-center text-[12px] font-medium text-zinc-400">
+          {EVENT.name} • {firebaseEnabled ? 'Secured by Firebase' : 'Local Dev Mode'}
         </div>
       </div>
     </div>

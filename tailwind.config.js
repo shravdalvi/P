@@ -1,56 +1,14 @@
-/** @type {import('tailwindcss').Config} */
+﻿/** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
       fontFamily: {
-        display: [
-          '-apple-system',
-          'BlinkMacSystemFont',
-          '"SF Pro Display"',
-          '"SF Pro Text"',
-          '"Segoe UI"',
-          'Roboto',
-          'Helvetica',
-          'Arial',
-          'sans-serif'
-        ],
-        body: [
-          '-apple-system',
-          'BlinkMacSystemFont',
-          '"SF Pro Text"',
-          '"SF Pro Display"',
-          '"Segoe UI"',
-          'Roboto',
-          'Helvetica',
-          'Arial',
-          'sans-serif'
-        ],
-        sans: [
-          '-apple-system',
-          'BlinkMacSystemFont',
-          '"SF Pro Text"',
-          '"SF Pro Display"',
-          '"Segoe UI"',
-          'Roboto',
-          'Helvetica',
-          'Arial',
-          'sans-serif'
-        ],
-        data: [
-          '"SF Mono"',
-          'ui-monospace',
-          '"JetBrains Mono"',
-          '"Roboto Mono"',
-          'monospace'
-        ],
-        mono: [
-          '"SF Mono"',
-          'ui-monospace',
-          '"JetBrains Mono"',
-          '"Roboto Mono"',
-          'monospace'
-        ]
+        display: ['"Plus Jakarta Sans"', 'sans-serif'],
+        body: ['"Plus Jakarta Sans"', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+        data: ['"Plus Jakarta Sans"', 'sans-serif'],
+        mono: ['"Plus Jakarta Sans"', 'sans-serif']
       },
       colors: {
         'surface-base': '#F8FAFC',
@@ -70,9 +28,9 @@ export default {
           muted: '#CBD5E1'
         },
         accent: {
-          DEFAULT: '#0D9488', // Teal 600
-          hover: '#0F766E',   // Teal 700
-          subtle: '#CCFBF1'   // Teal 100
+          DEFAULT: '#FACC15', // Yellow 400
+          hover: '#EAB308',   // Yellow 500
+          subtle: '#FEF08A'   // Yellow 200
         },
         base: {
           DEFAULT: '#F8FAFC',
@@ -81,31 +39,31 @@ export default {
           hair: '#E2E8F0'
         },
         ink: {
-          DEFAULT: '#0F172A',
-          dim: '#475569',
-          faint: '#94A3B8'
+          DEFAULT: '#000000',
+          dim: '#333333',
+          faint: '#666666'
         },
         brand: {
-          50: '#F0FDFA',
-          100: '#CCFBF1',
-          200: '#99F6E4',
-          300: '#5EEAD4',
-          400: '#2DD4BF',
-          500: '#14B8A6',
-          600: '#0D9488',
-          700: '#0F766E'
+          50: '#FEFCE8',
+          100: '#FEF9C3',
+          200: '#FEF08A',
+          300: '#FDE047',
+          400: '#FACC15',
+          500: '#EAB308',
+          600: '#CA8A04',
+          700: '#A16207'
         },
         status: {
-          safe: '#0D9488',      // Teal 600 (safe)
+          safe: '#10B981',      // Emerald 500
           moderate: '#F59E0B',  // Amber 500
           high: '#F97316',      // Orange 500
-          critical: '#DC2626',  // Red 600
+          critical: '#EF4444',  // Red 500
           info: '#3B82F6',      // Blue 500
-          resolved: '#0D9488'   // Teal 600
+          resolved: '#10B981'   // Emerald 500
         }
       },
       boxShadow: {
-        panel: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+        panel: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
       },
       backgroundImage: {
         'grid-fade': 'none'

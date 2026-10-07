@@ -1,0 +1,61 @@
+version: '3.8'
+services:
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+      - frontend
+
+  backend:
+    build: 
+      context: ./backend
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql+asyncpg://vibecheck:vibecheck_password@postgres:5432/vibecheck_db
+      - ALLOWED_ORIGINS=http://localhost:5173,http://localhost
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - postgres
+
+  frontend:
+    image: node:18-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: npm run dev -- --host 0.0.0.0
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - VITE_WS_URL=ws://localhost:8000
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+
+  postgres:
+    image: postgis/postgis:15-3.3-alpine
+    environment:
+      POSTGRES_USER: vibecheck
+      POSTGRES_PASSWORD: vibecheck_password
+      POSTGRES_DB: vibecheck_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

@@ -1,7 +1,10 @@
 import os
+import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import router
+from app.api.ws_routes import ws_router
+from app.workers.manager import start_event_workers
 
 app = FastAPI(title="Vibecheck Controller Realtime Backend")
 
@@ -20,3 +23,9 @@ app.add_middleware(
 )
 
 app.include_router(router)
+app.include_router(ws_router)
+
+@app.on_event("startup")
+async def startup_event():
+    # Keep default test-event running for local dev
+    start_event_workers("test-event")

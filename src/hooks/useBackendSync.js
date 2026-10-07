@@ -25,16 +25,15 @@ function zoneSnapshot(zone) {
 export function useBackendSync(localEngine) {
   const [backendZoneOverrides, setBackendZoneOverrides] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
-
-  const bufferRef = useRef([]);
-  const activeRecsRef = useRef(new Map());
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [activeDevices, setActiveDevices] = useState(0);
 
   // Firebase Refs
   const lastWrittenZonesRef = useRef(new Map());
   const hasSeededRef = useRef(false);
   const initialZonesRef = useRef(localEngine.zones);
 
-  // FIREBASE SYNC
+  // FIREBASE SYNC (Legacy, keeping for compatibility if requested)
   useEffect(() => {
     if (!firebaseEnabled) return;
 
@@ -46,6 +45,7 @@ export function useBackendSync(localEngine) {
         const unsub = await subscribeZones((zones) => {
           if (!mounted) return;
           setIsConnected(true);
+          setLastUpdated(new Date());
 
           if (zones.length === 0 && !hasSeededRef.current) {
             hasSeededRef.current = true;
@@ -79,97 +79,53 @@ export function useBackendSync(localEngine) {
     };
   }, []);
 
-  // LOCAL SIMULATOR TO FIRESTORE WRITE
-  useEffect(() => {
-    if (!firebaseEnabled || !hasSeededRef.current) return;
-
-    const toWrite = [];
-    for (const lz of localEngine.zones) {
-      const last = lastWrittenZonesRef.current.get(lz.id);
-      const currentSnapshot = zoneSnapshot(lz);
-
-      if (!last || JSON.stringify(last) !== JSON.stringify(currentSnapshot)) {
-        toWrite.push(lz);
-        lastWrittenZonesRef.current.set(lz.id, currentSnapshot);
-      }
-    }
-
-    if (toWrite.length > 0) {
-      writeZones(toWrite).catch(err => console.warn("Firestore write error:", err.message));
-    }
-  }, [localEngine.zones]);
-
-  // FASTAPI WEBSOCKET SYNC (Preserved for when Firebase is disabled)
+  // FASTAPI WEBSOCKET SYNC (SNAPSHOT Protocol)
   useEffect(() => {
     if (firebaseEnabled) return;
 
     let mounted = true;
-    let hydrating = false;
 
-    const handleConnect = async () => {
+    const handleConnect = () => {
       setIsConnected(true);
-      hydrating = true;
-      const data = await backendAdapter.getInitialZones();
-
-      if (mounted && data && data.zones) {
-        const overrides = {};
-        for (const z of data.zones) {
-          overrides[z.id] = z;
-        }
-
-        const buffer = bufferRef.current;
-        bufferRef.current = [];
-
-        for (const { entityId, data: eventData } of buffer) {
-          if (overrides[entityId]) {
-            overrides[entityId] = { ...overrides[entityId], ...eventData };
-          } else {
-            overrides[entityId] = { id: entityId, ...eventData };
-          }
-        }
-
-        setBackendZoneOverrides(overrides);
-      }
-      hydrating = false;
     };
 
     const handleDisconnect = () => {
       setIsConnected(false);
-      hydrating = false;
-      bufferRef.current = [];
-      setBackendZoneOverrides(null);
+    };
+
+    const handleSnapshot = (envelope) => {
+      if (!mounted) return;
+      const data = envelope; // type: "SNAPSHOT"
+      setLastUpdated(new Date(data.server_time || Date.now()));
+      setActiveDevices(data.active_devices || 0);
+
+      const overrides = {};
+      if (data.zones) {
+        for (const z of data.zones) {
+          overrides[z.zone_id] = {
+            id: z.zone_id,
+            occupancy: z.occupancy,
+            capacity: z.capacity,
+            ratio: z.capacity ? z.occupancy / z.capacity : 0,
+            risk: z.level.toLowerCase()
+          };
+        }
+      }
+      setBackendZoneOverrides(overrides);
     };
 
     const unsubConnect = backendAdapter.subscribe('sys.connected', handleConnect);
     const unsubDisconnect = backendAdapter.subscribe('sys.disconnected', handleDisconnect);
+    const unsubSnapshot = backendAdapter.subscribe('SNAPSHOT', handleSnapshot);
 
-    const unsubZone = backendAdapter.subscribe('zone.updated', ({ entityId, data }) => {
-      setBackendZoneOverrides(prev => {
-        if (!prev) {
-          bufferRef.current.push({ entityId, data });
-          return prev;
-        }
-        return {
-          ...prev,
-          [entityId]: {
-            ...prev[entityId],
-            ...data
-          }
-        };
-      });
-    });
-
-    if (backendAdapter.isConnected()) {
-      handleConnect();
-    } else {
-      backendAdapter.connect();
-    }
+    // Hardcode test-event for now, event selector comes later
+    backendAdapter.connect('test-event', 'dev_token');
 
     return () => {
       mounted = false;
       unsubConnect();
       unsubDisconnect();
-      unsubZone();
+      unsubSnapshot();
     };
   }, []);
 
@@ -184,7 +140,7 @@ export function useBackendSync(localEngine) {
         ...localZone,
         ...overrides,
         count: overrides.occupancy ?? overrides.count ?? localZone.count,
-        ratio: overrides.occupancyPercentage ?? overrides.ratio ?? localZone.ratio
+        ratio: overrides.ratio ?? localZone.ratio
       };
     });
   }, [localEngine.zones, backendZoneOverrides]);
@@ -195,7 +151,7 @@ export function useBackendSync(localEngine) {
     let highRisk = 0;
     let activeZones = 0;
     mergedZones.forEach(z => {
-      total += (z.occupancy ?? z.count ?? 0);
+      total += (z.count ?? 0);
       if (z.risk === 'critical' || z.risk === 'high') highRisk++;
       if (z.active !== false) activeZones++;
     });
@@ -203,7 +159,8 @@ export function useBackendSync(localEngine) {
       ...localEngine.kpis,
       totalCrowd: total,
       highRisk,
-      activeZones
+      activeZones,
+      activeDevices // Added for UI binding
     };
   }
 
@@ -211,6 +168,8 @@ export function useBackendSync(localEngine) {
     ...localEngine,
     zones: mergedZones,
     kpis: mergedKpis,
-    isBackendSynced: isConnected && backendZoneOverrides !== null
+    isBackendSynced: isConnected && backendZoneOverrides !== null,
+    lastUpdated,
+    activeDevices
   };
 }

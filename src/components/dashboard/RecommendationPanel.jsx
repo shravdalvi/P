@@ -101,6 +101,12 @@ export default function RecommendationPanel({ recommendations, zones, contingenc
               </span>
               <button onClick={() => onDismiss(activeRec.id)} className="text-[11px] px-3 py-1.5 border border-slate-200 rounded-[4px] text-slate-500 hover:text-slate-900">Acknowledge</button>
             </div>
+          ) : activeRec.status === 'loading' ? (
+            <div className="flex-1 flex flex-col items-center justify-center py-1 gap-2">
+              <span className="text-[12px] font-semibold text-slate-500 flex items-center gap-2">
+                 Analyzing...
+              </span>
+            </div>
           ) : (
             <>
               <button onClick={() => onApprove(activeRec.id)} className="flex-1 flex items-center justify-center gap-1.5 text-[12px] font-semibold px-3 py-2 rounded-[4px] bg-teal-600 text-white hover:bg-teal-600/90 transition-colors">

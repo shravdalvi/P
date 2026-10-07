@@ -8,6 +8,9 @@ import {
   MAP_OFFSET, MAP_CENTER, MAP_ZOOM, applyOffset,
   MAP_STYLE_LIGHT, VENUE_INFRA, GATES, ESP32_GATEWAYS
 } from '../lib/mapConfig'
+import { MapboxOverlay } from '@deck.gl/mapbox'
+import { ScatterplotLayer } from '@deck.gl/layers'
+import { usePositions } from '../hooks/usePositions.js'
 
 maplibregl.setWorkerUrl(maplibreWorker)
 
@@ -177,6 +180,12 @@ export default function LiveMapPage({ isDashboardMode = false }) {
   const [showGateways, setShowGateways] = useState(!isDashboardMode)
   const [showGates, setShowGates] = useState(!isDashboardMode)
   const [showFlow, setShowFlow] = useState(true)
+
+  // Roles that have view_individual_locations permission
+  const hasPermission = engine?.role === 'admin' || engine?.role === 'security'
+  const [showDots, setShowDots] = useState(false)
+  const positions = usePositions(showDots && hasPermission)
+  const overlayRef = useRef(null)
 
   const zones = engine?.zones || []
   const selectedZoneId = engine?.selectedZone?.id || 'zone-c'
@@ -383,7 +392,7 @@ export default function LiveMapPage({ isDashboardMode = false }) {
         paint: {
           'line-color': [
             'match', ['get', 'intensity'],
-            'redirect', '#38BDF8',
+            'redirect', '#000000',
             'pending', '#F59E0B',
             '#34D399'
           ],
@@ -443,7 +452,7 @@ export default function LiveMapPage({ isDashboardMode = false }) {
             .setHTML(`
               <div style="font-family:'SF Mono',ui-monospace,'JetBrains Mono','Roboto Mono',monospace;min-width:210px;padding:2px 0;">
                 <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #E2E8F0;padding-bottom:5px;margin-bottom:6px;">
-                  <span style="font-size:11px;font-weight:700;color:#38BDF8;">${gw.id}</span>
+                  <span style="font-size:11px;font-weight:700;color:#000000;">${gw.id}</span>
                   <span style="font-size:9.5px;color:#10B981;background:rgba(16,185,129,0.15);padding:1px 5px;border-radius:4px;border:1px solid rgba(16,185,129,0.3);">ONLINE</span>
                 </div>
                 <div style="font-size:12px;font-weight:600;color:#F8FAFC;margin-bottom:6px;">${gw.name}</div>
@@ -451,7 +460,7 @@ export default function LiveMapPage({ isDashboardMode = false }) {
                   <div>Host IP: <span style="color:#0F172A;">${gw.ip}</span></div>
                   <div>RSSI: <span style="color:#10B981;">${gw.rssi} dBm</span></div>
                   <div>Protocol: <span style="color:#0F172A;">ESP-NOW</span></div>
-                  <div>Tracked: <span style="color:#38BDF8;font-weight:700;">${gw.bandsCount}</span></div>
+                  <div>Tracked: <span style="color:#000000;font-weight:700;">${gw.bandsCount}</span></div>
                 </div>
               </div>
             `)
@@ -519,6 +528,84 @@ export default function LiveMapPage({ isDashboardMode = false }) {
     }
   }, [])
 
+  // Sync Deck.gl Dots Layer
+  useEffect(() => {
+    try {
+      const map = mapRef.current
+      if (!map || !mapReady) return
+
+      if (hasPermission && showDots) {
+        if (!overlayRef.current) {
+          overlayRef.current = new MapboxOverlay({
+            interleaved: true,
+            layers: []
+          })
+          map.addControl(overlayRef.current)
+        }
+        
+        const accuracyLayer = new ScatterplotLayer({
+          id: 'positions-accuracy-layer',
+          data: positions,
+          getPosition: d => [d.lng + MAP_OFFSET[0], d.lat + MAP_OFFSET[1]],
+          getFillColor: d => d.stale ? [156, 163, 175, 40] : [56, 189, 248, 40],
+          getLineColor: d => d.stale ? [156, 163, 175, 100] : [56, 189, 248, 100],
+          lineWidthMinPixels: 1,
+          getRadius: d => d.acc_m || 5,
+          radiusUnits: 'meters',
+          stroked: true,
+          pickable: false,
+          updateTriggers: {
+            getFillColor: [positions],
+            getLineColor: [positions]
+          }
+        })
+
+        const scatterLayer = new ScatterplotLayer({
+          id: 'positions-scatter-layer',
+          data: positions,
+          getPosition: d => [d.lng + MAP_OFFSET[0], d.lat + MAP_OFFSET[1]],
+          getFillColor: d => d.stale ? [156, 163, 175, 200] : [56, 189, 248, 255],
+          getRadius: 1.5,
+          radiusUnits: 'meters',
+          radiusMinPixels: 2,
+          radiusMaxPixels: 10,
+          pickable: true,
+          onClick: (info) => {
+            if (info.object && mapRef.current) {
+              const d = info.object
+              if (popupRef.current) popupRef.current.remove()
+              popupRef.current = new maplibregl.Popup({ closeButton: true, className: 'crowd-popup' })
+                .setLngLat([d.lng + MAP_OFFSET[0], d.lat + MAP_OFFSET[1]])
+                .setHTML(`
+                  <div style="font-family:monospace;padding:2px;">
+                    <div style="font-weight:bold;color:#000000;">ID: ${d.short_id}</div>
+                    <div>Zone: ${d.zone || 'Unknown'}</div>
+                    <div>State: ${d.score > 0.5 ? 'Moving' : 'Stationary'}</div>
+                    <div style="color:#94A3B8;font-size:10px;">Last seen: ${Math.round((Date.now() - d.lastSeen)/1000)}s ago</div>
+                  </div>
+                `)
+                .addTo(mapRef.current)
+            }
+          },
+          updateTriggers: {
+            getFillColor: [positions]
+          }
+        })
+
+        overlayRef.current.setProps({
+          layers: [accuracyLayer, scatterLayer]
+        })
+      } else {
+        if (overlayRef.current) {
+          map.removeControl(overlayRef.current)
+          overlayRef.current = null
+        }
+      }
+    } catch (err) {
+      console.error("Deck.gl Render Error:", err)
+    }
+  }, [mapReady, showDots, hasPermission, positions])
+
   // ── Sync Live Engine Data to Map ───────────────────────────────────────────
   useEffect(() => {
     const map = mapRef.current
@@ -545,7 +632,7 @@ export default function LiveMapPage({ isDashboardMode = false }) {
         const el = document.createElement('div')
         el.className = `zone-centroid-badge ${isSelected ? 'selected' : ''}`
         el.innerHTML = `
-          <div class="zone-badge-pill" style="border-color:${isSelected ? '#38BDF8' : riskObj.border};">
+          <div class="zone-badge-pill" style="border-color:${isSelected ? '#000000' : riskObj.border};">
             <span class="zone-badge-dot" style="background:${riskObj.fill};${isCritical ? 'animation:criticalPulse 1.2s infinite;' : ''}"></span>
             <span style="font-family:'SF Mono',ui-monospace,'JetBrains Mono','Roboto Mono',monospace;font-size:10.5px;font-weight:600;color:#0F172A;">${z.name.split('·')[0].trim()}</span>
             <span style="font-family:'SF Mono',ui-monospace,'JetBrains Mono','Roboto Mono',monospace;font-size:10.5px;font-weight:700;color:${riskObj.text};margin-left:2px;">${pct}%</span>
@@ -624,15 +711,15 @@ export default function LiveMapPage({ isDashboardMode = false }) {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-4 rounded-[6px] border border-slate-200 shadow-sm">
           <div>
             <div className="flex items-center gap-2.5">
-              <span className="w-2 h-2 rounded-full bg-teal-600 " />
-              <h1 className="font-mono font-semibold text-base tracking-tight text-slate-900">
-                VENUE DIGITAL TWIN // MERIDIAN ARENA DISTRICT
+              <span className="w-2 h-2 rounded-full bg-[#FACC15] " />
+              <h1 className="font-medium font-semibold text-base tracking-tight text-slate-900">
+                Meridian Arena Dashboard
               </h1>
-              <span className="rounded bg-teal-600/15 border border-teal-200 px-2 py-0.5 text-[10px] font-mono font-semibold text-teal-600">
-                ESP-32 MESH ACTIVE
+              <span className="rounded bg-zinc-100 border border-zinc-200 px-2 py-0.5 text-[10px] font-medium font-semibold text-zinc-900">
+                Live Connectivity
               </span>
             </div>
-            <p className="text-[11.5px] text-slate-500 mt-1 font-mono">
+            <p className="text-[11.5px] text-slate-500 mt-1 font-medium">
               12 Sectors Under Surveillance · Real-Time Wearable Ingestion & Predictive Rerouting
             </p>
           </div>
@@ -640,9 +727,9 @@ export default function LiveMapPage({ isDashboardMode = false }) {
           {/* Quick HUD Metrics */}
           <div className="flex items-center gap-2.5 flex-wrap">
             <div className="px-3 py-1.5 rounded-[4px] bg-slate-50 border border-slate-200 flex items-center gap-2">
-              <Users size={14} className="text-teal-600" />
-              <span className="text-[11px] font-mono text-slate-500 ">Total Visitors:</span>
-              <span className="font-mono text-[13px] font-semibold text-slate-900">
+              <Users size={14} className="text-zinc-900" />
+              <span className="text-[11px] font-medium text-slate-500 ">Total Visitors:</span>
+              <span className="font-medium text-[13px] font-semibold text-slate-900">
                 {totalHeadcount.toLocaleString()}
               </span>
             </div>
@@ -650,17 +737,17 @@ export default function LiveMapPage({ isDashboardMode = false }) {
             <div className={`px-3 py-1.5 rounded-[4px] border flex items-center gap-2 ${
               highRiskCount > 0 ? 'bg-red-50 border-red-200 text-red-600' : 'bg-slate-50 border-slate-200 text-slate-900'
             }`}>
-              <AlertTriangle size={14} className={highRiskCount > 0 ? 'text-red-600 ' : 'text-teal-600'} />
-              <span className="text-[11px] font-mono ">At Risk:</span>
-              <span className="font-mono text-[13px] font-semibold">
+              <AlertTriangle size={14} className={highRiskCount > 0 ? 'text-red-600 ' : 'text-zinc-900'} />
+              <span className="text-[11px] font-medium ">At Risk:</span>
+              <span className="font-medium text-[13px] font-semibold">
                 {highRiskCount} {highRiskCount === 1 ? 'Sector' : 'Sectors'}
               </span>
             </div>
 
             <div className="px-3 py-1.5 rounded-[4px] bg-slate-50 border border-slate-200 flex items-center gap-2">
-              <Wifi size={14} className="text-teal-600" />
-              <span className="text-[11px] font-mono text-slate-500 ">Host Gateways:</span>
-              <span className="font-mono text-[13px] font-semibold text-teal-600">
+              <Wifi size={14} className="text-zinc-900" />
+              <span className="text-[11px] font-medium text-slate-500 ">Host Gateways:</span>
+              <span className="font-medium text-[13px] font-semibold text-zinc-900">
                 {ESP32_GATEWAYS.length}/{ESP32_GATEWAYS.length} Online
               </span>
             </div>
@@ -677,15 +764,15 @@ export default function LiveMapPage({ isDashboardMode = false }) {
           {/* Spatial Layer Toolbar */}
           {!isDashboardMode && (
             <div className="px-3.5 py-2 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 bg-white z-10 select-none">
-              <div className="flex items-center gap-2 text-[11.5px] font-mono text-slate-500">
-                <Compass size={14} className="text-teal-600" />
-                <span className=" ">TACTICAL LAYERS</span>
+              <div className="flex items-center gap-2 text-[11.5px] font-medium text-slate-500">
+                <Compass size={14} className="text-zinc-900" />
+                <span className=" ">MAP LAYERS</span>
               </div>
 
               <div className="flex items-center gap-1.5 flex-wrap">
                 <button
                   onClick={() => setShowZones((v) => !v)}
-                  className={`px-2.5 py-1 rounded text-[11px] font-mono transition-colors border ${
+                  className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors border ${
                     showZones ? 'border-[#0284C7] bg-[#E0F2FE] text-[#0369A1] font-semibold' : 'border-slate-200 bg-slate-50 text-slate-500 hover:text-slate-900'
                   }`}
                 >
@@ -693,15 +780,25 @@ export default function LiveMapPage({ isDashboardMode = false }) {
                 </button>
                 <button
                   onClick={() => setShowHeat((v) => !v)}
-                  className={`px-2.5 py-1 rounded text-[11px] font-mono transition-colors border ${
+                  className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors border ${
                     showHeat ? 'border-[#D97706] bg-[#FEF3C7] text-[#B45309] font-semibold' : 'border-slate-200 bg-slate-50 text-slate-500 hover:text-slate-900'
                   }`}
                 >
                   ● Heatmap
                 </button>
+                {hasPermission && (
+                  <button
+                    onClick={() => setShowDots((v) => !v)}
+                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors border ${
+                      showDots ? 'border-[#8B5CF6] bg-[#EDE9FE] text-[#6D28D9] font-semibold' : 'border-slate-200 bg-slate-50 text-slate-500 hover:text-slate-900'
+                    }`}
+                  >
+                    ● Dots
+                  </button>
+                )}
                 <button
                   onClick={() => setShowGateways((v) => !v)}
-                  className={`px-2.5 py-1 rounded text-[11px] font-mono transition-colors border ${
+                  className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors border ${
                     showGateways ? 'border-[#0284C7] bg-[#E0F2FE] text-[#0369A1] font-semibold' : 'border-slate-200 bg-slate-50 text-slate-500 hover:text-slate-900'
                   }`}
                 >
@@ -709,7 +806,7 @@ export default function LiveMapPage({ isDashboardMode = false }) {
                 </button>
                 <button
                   onClick={() => setShowFlow((v) => !v)}
-                  className={`px-2.5 py-1 rounded text-[11px] font-mono transition-colors border ${
+                  className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors border ${
                     showFlow ? 'border-[#059669] bg-[#D1FAE5] text-[#047857] font-semibold' : 'border-slate-200 bg-slate-50 text-slate-500 hover:text-slate-900'
                   }`}
                 >
@@ -717,7 +814,7 @@ export default function LiveMapPage({ isDashboardMode = false }) {
                 </button>
                 <button
                   onClick={() => setShowGates((v) => !v)}
-                  className={`px-2.5 py-1 rounded text-[11px] font-mono transition-colors border ${
+                  className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors border ${
                     showGates ? 'border-[#64748B] bg-[#F1F5F9] text-slate-900 font-semibold' : 'border-slate-200 bg-slate-50 text-slate-500 hover:text-slate-900'
                   }`}
                 >
@@ -736,21 +833,21 @@ export default function LiveMapPage({ isDashboardMode = false }) {
               <button
                 onClick={zoomIn}
                 aria-label="Zoom In"
-                className="w-8 h-8 rounded bg-white border border-slate-200 text-slate-500 hover:text-teal-600 hover:border-teal-600 flex items-center justify-center transition-colors shadow-sm"
+                className="w-8 h-8 rounded bg-white border border-slate-200 text-slate-500 hover:text-zinc-900 hover:border-teal-600 flex items-center justify-center transition-colors shadow-sm"
               >
                 <Plus size={15} />
               </button>
               <button
                 onClick={zoomOut}
                 aria-label="Zoom Out"
-                className="w-8 h-8 rounded bg-white border border-slate-200 text-slate-500 hover:text-teal-600 hover:border-teal-600 flex items-center justify-center transition-colors shadow-sm"
+                className="w-8 h-8 rounded bg-white border border-slate-200 text-slate-500 hover:text-zinc-900 hover:border-teal-600 flex items-center justify-center transition-colors shadow-sm"
               >
                 <Minus size={15} />
               </button>
               <button
                 onClick={resetView}
                 aria-label="Reset Camera"
-                className="w-8 h-8 rounded bg-white border border-slate-200 text-slate-500 hover:text-teal-600 hover:border-teal-600 flex items-center justify-center transition-colors shadow-sm mt-1"
+                className="w-8 h-8 rounded bg-white border border-slate-200 text-slate-500 hover:text-zinc-900 hover:border-teal-600 flex items-center justify-center transition-colors shadow-sm mt-1"
                 title="Reset View"
               >
                 <RotateCcw size={13} />
@@ -758,7 +855,7 @@ export default function LiveMapPage({ isDashboardMode = false }) {
             </div>
 
             {/* Map Legend Overlay */}
-            <div className="absolute bottom-3 left-3 z-10 rounded-[6px] border border-slate-200 bg-white/95 backdrop-blur-md px-3 py-2 shadow-md text-[11px] font-mono">
+            <div className="absolute bottom-3 left-3 z-10 rounded-[6px] border border-slate-200 bg-white/95 backdrop-blur-md px-3 py-2 shadow-md text-[11px] font-medium">
               <p className="text-[9.5px] text-slate-500 mb-1 font-semibold">
                 RISK CLASSIFICATION
               </p>
@@ -792,14 +889,14 @@ export default function LiveMapPage({ isDashboardMode = false }) {
               {/* Inspector Header */}
               <div className="flex items-center justify-between pb-3 border-b border-slate-200 mb-3.5">
                 <div className="flex items-center gap-2">
-                  <MapPin size={15} className="text-teal-600" />
-                  <h2 className="font-mono font-semibold text-[13px] text-slate-900">
+                  <MapPin size={15} className="text-zinc-900" />
+                  <h2 className="font-medium font-semibold text-[13px] text-slate-900">
                     SECTOR OPERATIONS
                   </h2>
                 </div>
                 {selectedZone && (
                   <span
-                    className="px-2 py-0.5 rounded text-[10.5px] font-mono font-semibold"
+                    className="px-2 py-0.5 rounded text-[10.5px] font-medium font-semibold"
                     style={{ background: selRisk.bg, color: selRisk.text, border: `1px solid ${selRisk.border}60` }}
                   >
                     {selRisk.label}
@@ -811,10 +908,10 @@ export default function LiveMapPage({ isDashboardMode = false }) {
                 <div className="flex flex-col flex-1 space-y-4">
                   {/* Selected Sector Identity */}
                   <div>
-                    <h3 className="font-mono font-semibold text-lg text-slate-900 leading-tight">
+                    <h3 className="font-medium font-semibold text-lg text-slate-900 leading-tight">
                       {selectedZone.name}
                     </h3>
-                    <p className="text-[11.5px] text-slate-500 font-mono mt-0.5">
+                    <p className="text-[11.5px] text-slate-500 font-medium mt-0.5">
                       Sector ID: <span className="text-slate-900">{selectedZone.id}</span> · Monitored Sector
                     </p>
                   </div>
@@ -822,8 +919,8 @@ export default function LiveMapPage({ isDashboardMode = false }) {
                   {/* Real-time Occupancy Gauge */}
                   <div className="p-3.5 rounded-[6px] bg-slate-50 border border-slate-200">
                     <div className="flex justify-between items-baseline mb-2">
-                      <span className="text-[11px] text-slate-500 font-mono  ">Live Density</span>
-                      <span className="font-mono text-2xl font-bold text-slate-900">
+                      <span className="text-[11px] text-slate-500 font-medium  ">Live Density</span>
+                      <span className="font-medium text-2xl font-bold text-slate-900">
                         {Math.round((selectedZone.occupancyPercentage ?? selectedZone.ratio) * 100)}%
                       </span>
                     </div>
@@ -838,7 +935,7 @@ export default function LiveMapPage({ isDashboardMode = false }) {
                       />
                     </div>
 
-                    <div className="flex justify-between text-[11px] font-mono">
+                    <div className="flex justify-between text-[11px] font-medium">
                       <span className="text-slate-900 font-semibold">
                         {(selectedZone.occupancy ?? selectedZone.count).toLocaleString()} present
                       </span>
@@ -851,21 +948,21 @@ export default function LiveMapPage({ isDashboardMode = false }) {
                   {/* Flow Dynamics Grid */}
                   <div className="grid grid-cols-3 gap-2">
                     <div className="p-2.5 rounded-[4px] bg-slate-50 border border-slate-200 text-center">
-                      <p className="text-[9.5px] text-slate-500 font-mono ">Inflow</p>
-                      <p className="font-mono text-[13px] text-teal-600 font-semibold mt-0.5">
+                      <p className="text-[9.5px] text-slate-500 font-medium ">Inflow</p>
+                      <p className="font-medium text-[13px] text-zinc-900 font-semibold mt-0.5">
                         +{selectedZone.incoming}/m
                       </p>
                     </div>
                     <div className="p-2.5 rounded-[4px] bg-slate-50 border border-slate-200 text-center">
-                      <p className="text-[9.5px] text-slate-500 font-mono ">Outflow</p>
-                      <p className="font-mono text-[13px] text-slate-500 font-semibold mt-0.5">
+                      <p className="text-[9.5px] text-slate-500 font-medium ">Outflow</p>
+                      <p className="font-medium text-[13px] text-slate-500 font-semibold mt-0.5">
                         -{selectedZone.outgoing}/m
                       </p>
                     </div>
                     <div className="p-2.5 rounded-[4px] bg-slate-50 border border-slate-200 text-center">
-                      <p className="text-[9.5px] text-slate-500 font-mono ">Net Flow</p>
-                      <p className={`font-mono text-[13px] font-semibold mt-0.5 ${
-                        selectedZone.netFlow > 2 ? 'text-red-600' : selectedZone.netFlow < -2 ? 'text-teal-600' : 'text-slate-500'
+                      <p className="text-[9.5px] text-slate-500 font-medium ">Net Flow</p>
+                      <p className={`font-medium text-[13px] font-semibold mt-0.5 ${
+                        selectedZone.netFlow > 2 ? 'text-red-600' : selectedZone.netFlow < -2 ? 'text-zinc-900' : 'text-slate-500'
                       }`}>
                         {selectedZone.netFlow >= 0 ? '+' : ''}{selectedZone.netFlow}/m
                       </p>
@@ -873,22 +970,22 @@ export default function LiveMapPage({ isDashboardMode = false }) {
                   </div>
 
                   {/* Hardware Anchor Telemetry (ESP-32) */}
-                  <div className="p-3 rounded-[6px] bg-teal-600/5 border border-teal-600/20">
+                  <div className="p-3 rounded-[6px] bg-[#FACC15]/5 border border-teal-600/20">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-1.5">
-                        <Cpu size={14} className="text-teal-600" />
-                        <span className="text-[11px] font-mono font-semibold text-teal-600">
+                        <Cpu size={14} className="text-zinc-900" />
+                        <span className="text-[11px] font-medium font-semibold text-zinc-900">
                           ESP-32 Host Node
                         </span>
                       </div>
-                      <span className="text-[10px] font-mono text-teal-600 bg-teal-50 border border-teal-200 px-1.5 py-0.5 rounded">
+                      <span className="text-[10px] font-medium text-zinc-900 bg-teal-50 border border-zinc-200 px-1.5 py-0.5 rounded">
                         ONLINE
                       </span>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-[10.5px] font-mono text-slate-500">
+                    <div className="grid grid-cols-2 gap-2 text-[10.5px] font-medium text-slate-500">
                       <div>Hardware: <span className="text-slate-900 font-semibold">{associatedGateway ? associatedGateway.id : 'GW-LOCAL'}</span></div>
-                      <div>Signal: <span className="text-teal-600 font-semibold">{associatedGateway ? `${associatedGateway.rssi} dBm` : '-60 dBm'}</span></div>
-                      <div>Active Bands: <span className="text-teal-600 font-semibold">{associatedGateway ? associatedGateway.bandsCount.toLocaleString() : (selectedZone.count * 0.9).toFixed(0)}</span></div>
+                      <div>Signal: <span className="text-zinc-900 font-semibold">{associatedGateway ? `${associatedGateway.rssi} dBm` : '-60 dBm'}</span></div>
+                      <div>Active Bands: <span className="text-zinc-900 font-semibold">{associatedGateway ? associatedGateway.bandsCount.toLocaleString() : (selectedZone.count * 0.9).toFixed(0)}</span></div>
                       <div>Protocol: <span className="text-slate-900">BLE 5.0 / Mesh</span></div>
                     </div>
                   </div>
@@ -896,21 +993,21 @@ export default function LiveMapPage({ isDashboardMode = false }) {
                   {/* Crowd prediction & Breach Horizon */}
                   <div className="p-3 rounded-[6px] bg-slate-50 border border-slate-200 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-mono text-slate-500 ">
+                      <span className="text-[11px] font-medium text-slate-500 ">
                         Breach Horizon
                       </span>
                       {selectedZone.prediction?.breachIn ? (
-                        <span className="text-[11px] font-mono text-red-600 font-semibold">
+                        <span className="text-[11px] font-medium text-red-600 font-semibold">
                           Breach ~{selectedZone.prediction.breachIn}m
                         </span>
                       ) : (
-                        <span className="text-[11px] font-mono text-teal-600 font-semibold">
+                        <span className="text-[11px] font-medium text-zinc-900 font-semibold">
                           Capacity Stable
                         </span>
                       )}
                     </div>
                     {selectedZone.prediction && (
-                      <div className="grid grid-cols-3 gap-1.5 text-center text-[10.5px] font-mono">
+                      <div className="grid grid-cols-3 gap-1.5 text-center text-[10.5px] font-medium">
                         {selectedZone.prediction.projections.map((p) => (
                           <div key={p.min} className="p-1 rounded bg-white border border-slate-200">
                             <span className="text-slate-500 text-[9.5px]">+{p.min}m: </span>
@@ -924,23 +1021,23 @@ export default function LiveMapPage({ isDashboardMode = false }) {
                   {/* Recommended action & Action Buttons */}
                   {activeRec && (
                     <div className="p-3 rounded-[6px] bg-red-50 border border-red-200 space-y-2">
-                      <div className="flex items-center gap-1.5 text-[11.5px] font-semibold text-red-600 font-mono">
+                      <div className="flex items-center gap-1.5 text-[11.5px] font-semibold text-red-600 font-medium">
                         <Zap size={14} />
                         <span>AI ACTION PLAN AVAILABLE</span>
                       </div>
-                      <p className="text-[11.5px] text-slate-900 font-mono leading-tight">
-                        Divert excess flow toward <span className="font-semibold text-teal-600">{activeRec.targetZone}</span>.
+                      <p className="text-[11.5px] text-slate-900 font-medium leading-tight">
+                        Divert excess flow toward <span className="font-semibold text-zinc-900">{activeRec.targetZone}</span>.
                       </p>
                       {activeRec.status === 'pending' ? (
                         <button
                           onClick={() => engine?.approveRecommendation(activeRec.id)}
-                          className="w-full flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-600-hover text-surface-base px-3 py-2 rounded font-mono text-[11.5px] font-semibold transition-colors shadow"
+                          className="w-full flex items-center justify-center gap-2 bg-[#FACC15] hover:bg-[#FACC15]-hover text-surface-base px-3 py-2 rounded font-medium text-[11.5px] font-semibold transition-colors shadow"
                         >
                           <CheckCircle2 size={14} />
                           <span>Approve Crowd Redirection</span>
                         </button>
                       ) : (
-                        <div className="flex items-center gap-1.5 text-teal-600 text-[11px] font-mono font-semibold">
+                        <div className="flex items-center gap-1.5 text-zinc-900 text-[11px] font-medium font-semibold">
                           <CheckCircle2 size={13} />
                           <span>PLAN {activeRec.status.toUpperCase()}</span>
                         </div>
@@ -952,7 +1049,7 @@ export default function LiveMapPage({ isDashboardMode = false }) {
                   <div className="mt-auto pt-3 border-t border-slate-200">
                     <button
                       onClick={() => navigate('/dashboard')}
-                      className="w-full flex items-center justify-between bg-slate-50 hover:bg-slate-200 text-slate-900 px-4 py-2.5 rounded-[6px] border border-slate-200 text-[12px] font-mono font-medium transition-colors"
+                      className="w-full flex items-center justify-between bg-slate-50 hover:bg-slate-200 text-slate-900 px-4 py-2.5 rounded-[6px] border border-slate-200 text-[12px] font-medium font-medium transition-colors"
                     >
                       <span>Command Center Dashboard</span>
                       <ChevronRight size={15} />
@@ -960,7 +1057,7 @@ export default function LiveMapPage({ isDashboardMode = false }) {
                   </div>
                 </div>
               ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-slate-500 font-mono">
+                <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-slate-500 font-medium">
                   <MapPin size={24} className="text-border-default mb-2" />
                   <p className="text-[13px] text-slate-900 font-semibold">Select a Sector on Map</p>
                   <p className="text-[11px] mt-1 text-slate-500">Tap any zone polygon or centroid chip</p>
@@ -973,3 +1070,4 @@ export default function LiveMapPage({ isDashboardMode = false }) {
     </div>
   )
 }
+

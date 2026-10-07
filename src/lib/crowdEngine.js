@@ -11,6 +11,41 @@ import {
   THRESHOLDS
 } from '../data/mockData.js'
 
+export async function fetchGroqInsights(sourceZone, targetZone) {
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+  if (!apiKey) {
+    console.error("VITE_GROQ_API_KEY is not set.");
+    return null;
+  }
+
+  const prompt = `Zone ${sourceZone.name} is at ${Math.round(sourceZone.ratio*100)}% capacity with ${sourceZone.netFlow}/m net flow. Target Zone ${targetZone.name} is at ${Math.round(targetZone.ratio*100)}% capacity. Generate exactly 3 contributing factors for the critical zone's risk, and a 2-step rationale for redirecting the crowd from ${sourceZone.name} to ${targetZone.name}. Return JSON in exactly this format:
+{
+  "contributingFactors": ["string", "string", "string"],
+  "rationale": ["string", "string"]
+}`;
+
+  try {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "llama3-8b-8192",
+        messages: [{ role: "system", content: "You are an AI crowd management expert." }, { role: "user", content: prompt }],
+        response_format: { type: "json_object" },
+        temperature: 0.5
+      })
+    });
+    const data = await res.json();
+    return JSON.parse(data.choices[0].message.content);
+  } catch (e) {
+    console.error("Groq fetch error", e);
+    return null;
+  }
+}
+
 export function classifyRisk(occupancyRatio, thresholds = THRESHOLDS) {
   if (occupancyRatio >= 1) return 'overcapacity'
   if (occupancyRatio >= thresholds.critical) return 'critical'
@@ -165,13 +200,9 @@ export function computeIntelligence(zones, activeRecsMap = new Map()) {
           targetZoneId: bestTarget.id,
           targetZone: bestTarget.name,
           action: 'REDIRECT_CROWD',
-          rationale: [
-            `${bestTarget.name.split('·')[0].trim()} has ${(100 - Math.round(bestTarget.ratio*100))}% remaining capacity.`,
-            `Incoming flow is currently manageable (${bestTarget.incoming}/m).`,
-            `Risk remains within acceptable operating range.`
-          ],
+          rationale: ["Generating AI insights..."],
           confidence: 'HIGH',
-          status: 'pending',
+          status: 'loading',
           targetMetrics: {
             occupancy: Math.round(bestTarget.ratio * 100),
             capacityRemaining: 100 - Math.round(bestTarget.ratio * 100),
@@ -190,11 +221,8 @@ export function computeIntelligence(zones, activeRecsMap = new Map()) {
         if (bestTarget && bestTarget.id !== rec.targetZoneId) {
           rec.targetZoneId = bestTarget.id;
           rec.targetZone = bestTarget.name;
-          rec.rationale = [
-            `${bestTarget.name.split('·')[0].trim()} has ${(100 - Math.round(bestTarget.ratio*100))}% remaining capacity.`,
-            `Incoming flow is currently manageable (${bestTarget.incoming}/m).`,
-            `Risk remains within acceptable operating range.`
-          ];
+          rec.rationale = ["Recalculating AI insights..."];
+          rec.status = 'loading';
           rec.targetMetrics = {
             occupancy: Math.round(bestTarget.ratio * 100),
             capacityRemaining: 100 - Math.round(bestTarget.ratio * 100),
@@ -273,7 +301,8 @@ export function useCrowdEngine() {
   const [teams, setTeams] = useState(RESPONSE_TEAMS)
   const [selectedZoneId, setSelectedZoneId] = useState(null)
   const [tick, setTick] = useState(0)
-
+  const [groqInsights, setGroqInsights] = useState({})
+  const insightsFetchingRef = useRef(new Set())
   useEffect(() => {
     if (!firebaseEnabled) {
       backendAdapter.connect();
@@ -287,6 +316,42 @@ export function useCrowdEngine() {
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     setActivityLog((prev) => [{ id: Math.random().toString(), time, message, type }, ...prev].slice(0, 50))
   }, [])
+
+  useEffect(() => {
+    let changed = false;
+    recommendations.forEach(rec => {
+      if (rec.status === 'loading' && !insightsFetchingRef.current.has(rec.sourceZoneId)) {
+        insightsFetchingRef.current.add(rec.sourceZoneId);
+        const sourceZone = zones.find(z => z.id === rec.sourceZoneId);
+        const targetZone = zones.find(z => z.id === rec.targetZoneId);
+        if (sourceZone && targetZone) {
+          fetchGroqInsights(sourceZone, targetZone).then(insights => {
+            if (insights) {
+              setGroqInsights(prev => ({ ...prev, [sourceZone.id]: { factors: insights.contributingFactors, rationale: insights.rationale } }));
+              const currentRec = activeRecsRef.current.get(sourceZone.id);
+              if (currentRec && currentRec.status === 'loading') {
+                currentRec.status = 'pending';
+                currentRec.rationale = insights.rationale;
+                setRecommendations(Array.from(activeRecsRef.current.values()));
+              }
+            } else {
+              // fallback
+              const currentRec = activeRecsRef.current.get(sourceZone.id);
+              if (currentRec && currentRec.status === 'loading') {
+                currentRec.status = 'pending';
+                currentRec.rationale = [
+                  `${targetZone.name.split('·')[0].trim()} has ${(100 - Math.round(targetZone.ratio*100))}% remaining capacity.`,
+                  `Incoming flow is currently manageable (${targetZone.incoming}/m).`,
+                  `Risk remains within acceptable operating range.`
+                ];
+                setRecommendations(Array.from(activeRecsRef.current.values()));
+              }
+            }
+          });
+        }
+      }
+    });
+  }, [recommendations, zones]);
 
   const tickRef = useRef(null)
 
@@ -365,9 +430,10 @@ export function useCrowdEngine() {
         const intel = computeIntelligence(nextZones, activeRecsRef.current);
         activeRecsRef.current = intel.recommendationsMap;
         setRecommendations(intel.recommendations);
-        if (!firebaseEnabled) {
-          backendAdapter.ingestSimulatorData(nextZones);
-        }
+        // Real backend handles its own simulator or ingest.
+        // if (!firebaseEnabled) {
+        //   backendAdapter.ingestSimulatorData(nextZones);
+        // }
 
         return nextZones;
       })
@@ -380,8 +446,16 @@ export function useCrowdEngine() {
   // Intelligence Objects explicitly exposed for the UI
   const { aiPrediction, contingencyTarget } = useMemo(() => {
     const intel = computeIntelligence(zones, activeRecsRef.current);
+    
+    if (intel.aiPrediction) {
+      const insight = groqInsights[intel.aiPrediction.predictedZone];
+      if (insight && insight.factors) {
+        intel.aiPrediction.contributingFactors = insight.factors;
+      }
+    }
+    
     return { aiPrediction: intel.aiPrediction, contingencyTarget: intel.contingencyTarget };
-  }, [zones]);
+  }, [zones, groqInsights]);
 
 
   const kpis = useMemo(() => {

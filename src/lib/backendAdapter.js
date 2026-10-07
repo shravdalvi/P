@@ -1,52 +1,48 @@
 /**
  * Backend Adapter for Vibecheck Controller
- *
- * Handles the seam between the frontend and the FastAPI backend.
- * Provides WebSocket connection management and a method for the local
- * simulator to forward data into the backend ingestion pipeline.
  */
 
 const BACKEND_HTTP_URL = import.meta.env.VITE_BACKEND_HTTP_URL || 'http://localhost:8000';
-const BACKEND_WS_URL = import.meta.env.VITE_BACKEND_WS_URL || 'ws://localhost:8000/ws';
+const BACKEND_WS_BASE_URL = import.meta.env.VITE_BACKEND_WS_URL || 'ws://localhost:8000';
 
 class BackendAdapter {
+  constructor() {
+    this.ws = null;
+    this.posWs = null;
+    this.reconnectAttempts = 0;
+    this.posReconnectAttempts = 0;
+    this.maxReconnectAttempts = 5;
+    this.listeners = new Map();
+    this.currentEventId = null;
+    this.currentToken = null;
+  }
+
   isConnected() {
     return this.ws && this.ws.readyState === WebSocket.OPEN;
   }
-
-  async getInitialZones() {
-    try {
-      const response = await fetch(`${BACKEND_HTTP_URL}/api/zones`);
-      if (response.ok) {
-        const data = await response.json();
-        return data; // { zones: [], timestamp: "..." }
-      }
-    } catch (err) {
-      console.warn('[BackendAdapter] Failed to fetch initial state');
-    }
-    return null;
+  
+  isPositionsConnected() {
+    return this.posWs && this.posWs.readyState === WebSocket.OPEN;
   }
 
-  constructor() {
-    this.ws = null;
-    this.reconnectAttempts = 0;
-    this.maxReconnectAttempts = 5;
-    this.listeners = new Map();
-    this.previousZones = new Map();
-  }
-
-  connect() {
-    if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
+  connect(eventId = 'test-event', token = 'dev_token') {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN && this.currentEventId === eventId) {
       return;
     }
 
+    if (this.ws) this.ws.close();
+
+    this.currentEventId = eventId;
+    this.currentToken = token;
+
     try {
-      this.ws = new WebSocket(BACKEND_WS_URL);
+      const wsUrl = `${BACKEND_WS_BASE_URL}/events/${eventId}/dashboard?token=${token}`;
+      this.ws = new WebSocket(wsUrl);
 
       this.ws.onopen = () => {
-        console.log('[BackendAdapter] Connected to realtime backend');
+        console.log('[BackendAdapter] Connected to realtime dashboard');
         this.reconnectAttempts = 0;
-        this._handleEvent({ type: 'sys.connected', entityId: 'sys', data: {} });
+        this._handleEvent({ type: 'sys.connected', data: {} });
       };
 
       this.ws.onmessage = (event) => {
@@ -60,25 +56,65 @@ class BackendAdapter {
 
       this.ws.onclose = () => {
         console.log('[BackendAdapter] Disconnected from backend');
-        this._handleEvent({ type: 'sys.disconnected', entityId: 'sys', data: {} });
+        this._handleEvent({ type: 'sys.disconnected', data: {} });
         this._attemptReconnect();
       };
+    } catch (err) {
+      this._attemptReconnect();
+    }
+  }
 
-      this.ws.onerror = (err) => {
-        console.error('[BackendAdapter] WebSocket error', err);
+  connectPositions(eventId = 'test-event', token = 'dev_token') {
+    if (this.posWs && this.posWs.readyState === WebSocket.OPEN) return;
+    if (this.posWs) this.posWs.close();
+
+    try {
+      const wsUrl = `${BACKEND_WS_BASE_URL}/events/${eventId}/dashboard/positions?token=${token}`;
+      this.posWs = new WebSocket(wsUrl);
+
+      this.posWs.onopen = () => {
+        console.log('[BackendAdapter] Connected to positions stream');
+        this.posReconnectAttempts = 0;
+      };
+
+      this.posWs.onmessage = (event) => {
+        try {
+          const envelope = JSON.parse(event.data);
+          this._handleEvent(envelope);
+        } catch (err) {
+          console.error('[BackendAdapter] Error parsing positions websocket message', err);
+        }
+      };
+
+      this.posWs.onclose = () => {
+        console.log('[BackendAdapter] Disconnected from positions stream');
+        this._attemptPosReconnect();
       };
     } catch (err) {
-      console.error('[BackendAdapter] Connection failed', err);
-      this._attemptReconnect();
+      this._attemptPosReconnect();
+    }
+  }
+
+  disconnectPositions() {
+    if (this.posWs) {
+      this.posWs.close();
+      this.posWs = null;
     }
   }
 
   _attemptReconnect() {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      const timeout = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 10000);
-      console.log(`[BackendAdapter] Reconnecting in ${timeout}ms...`);
-      setTimeout(() => this.connect(), timeout);
+      const timeout = Math.min(1000 * Math.pow(2, this.reconnectAttempts) + Math.random() * 500, 10000);
+      setTimeout(() => this.connect(this.currentEventId, this.currentToken), timeout);
+    }
+  }
+  
+  _attemptPosReconnect() {
+    if (this.posReconnectAttempts < this.maxReconnectAttempts) {
+      this.posReconnectAttempts++;
+      const timeout = Math.min(1000 * Math.pow(2, this.posReconnectAttempts) + Math.random() * 500, 10000);
+      setTimeout(() => this.connectPositions(this.currentEventId, this.currentToken), timeout);
     }
   }
 
@@ -96,47 +132,9 @@ class BackendAdapter {
   }
 
   _handleEvent(envelope) {
-    const { type, entityId, data } = envelope;
+    const { type } = envelope;
     if (this.listeners.has(type)) {
-      this.listeners.get(type).forEach(cb => cb({ entityId, data }));
-    }
-  }
-
-  // Seam for the local simulator to push data to the backend
-  async ingestSimulatorData(zones) {
-    const changedZones = [];
-
-    for (const z of zones) {
-      const prev = this.previousZones.get(z.id);
-      // Check if critical telemetry fields changed to avoid sending unchanged zones
-      if (!prev ||
-          prev.count !== z.count ||
-          prev.ratio !== z.ratio ||
-          prev.netFlow !== z.netFlow ||
-          prev.risk !== z.risk ||
-          prev.incoming !== z.incoming ||
-          prev.outgoing !== z.outgoing) {
-
-        changedZones.push(z);
-        this.previousZones.set(z.id, { ...z });
-      }
-    }
-
-    if (changedZones.length === 0) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`${BACKEND_HTTP_URL}/api/ingest/simulator`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(changedZones)
-      });
-      if (!response.ok) {
-        console.warn('[BackendAdapter] Simulator ingestion warning', response.status);
-      }
-    } catch (err) {
-      // Fail silently if backend is not running to avoid breaking local dev
+      this.listeners.get(type).forEach(cb => cb(envelope));
     }
   }
 }

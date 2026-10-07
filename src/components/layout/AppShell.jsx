@@ -24,9 +24,16 @@ export default function AppShell({ role, onLogout }) {
       )}
 
       <div className="flex-1 flex flex-col min-w-0 bg-slate-100">
-        <Header alertCount={engine.kpis.activeAlerts} onMenuClick={() => setMobileOpen(true)} onLogout={onLogout} />
+        <Header 
+          alertCount={engine.kpis.activeAlerts} 
+          onMenuClick={() => setMobileOpen(true)} 
+          onLogout={onLogout}
+          isConnected={engine.isBackendSynced}
+          lastUpdated={engine.lastUpdated}
+          activeDevices={engine.activeDevices}
+        />
         <main className="flex-1 overflow-y-auto bg-slate-100">
-          <Outlet context={engine} />
+          <Outlet context={{ ...engine, role }} />
         </main>
       </div>
     </div>
